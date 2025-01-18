@@ -14,6 +14,12 @@
     box-shadow: 0 1px 1px rgba(0,0,0,.04);
 }
 
+/* Target lists only within our plugin's cards */
+.card ol,
+.card ul {
+    margin-left: 20px;
+}
+
 .preview-container {
     display: flex;
     align-items: center;
