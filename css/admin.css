@@ -1,11 +1,11 @@
 /* Link Blog and Go Admin Styles */
-.wrap h1 .version {
+body.settings_page_link-blog-settings .wrap h1 .version {
     font-size: 14px;
     color: #646970;
     font-weight: 400;
 }
 
-.card {
+body.settings_page_link-blog-settings .card {
     background: #fff;
     border: 1px solid #c3c4c7;
     border-radius: 2px;
@@ -14,32 +14,32 @@
     box-shadow: 0 1px 1px rgba(0,0,0,.04);
 }
 
-/* Target lists only within our plugin's cards */
-.card ol,
-.card ul {
+/* Target lists only within our plugin's content */
+body.settings_page_link-blog-settings .card ol,
+body.settings_page_link-blog-settings .card ul {
     margin-left: 20px;
 }
 
-.preview-container {
+body.settings_page_link-blog-settings .preview-container {
     display: flex;
     align-items: center;
     gap: 20px;
     margin: 20px 0;
 }
 
-.preview-box {
+body.settings_page_link-blog-settings .preview-box {
     flex: 1;
     border: 1px solid #dcdcde;
     padding: 15px;
     background: #f6f7f7;
 }
 
-.preview-arrow {
+body.settings_page_link-blog-settings .preview-arrow {
     color: #646970;
     font-size: 24px;
 }
 
-.preview-content {
+body.settings_page_link-blog-settings .preview-content {
     background: #fff;
     padding: 15px;
     border: 1px solid #dcdcde;
