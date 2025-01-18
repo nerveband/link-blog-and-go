@@ -39,4 +39,7 @@ wp-content/plugins/hello.php
 # Logs and databases
 *.log
 *.sql
-*.sqlite 
+*.sqlite
+
+# Spec files
+.specstory 
