@@ -25,6 +25,7 @@ class LinkBlogSetup {
         add_filter('the_content', array($this, 'style_link_posts'));
         add_action('wp_head', array($this, 'add_link_styles'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_styles'));
+        add_action('admin_notices', array($this, 'check_links_category'));
 
         // Only add RSS filters if enabled
         $options = get_option('link_blog_options');
@@ -171,6 +172,22 @@ Optional: Credit where you found the link with "via"</pre>
         );
 
         add_settings_field(
+            'show_permalink',
+            'Show Permalink Symbol',
+            array($this, 'show_permalink_callback'),
+            'link-blog-settings',
+            'link_blog_settings_section'
+        );
+
+        add_settings_field(
+            'permalink_position',
+            'Permalink Symbol Position',
+            array($this, 'permalink_position_callback'),
+            'link-blog-settings',
+            'link_blog_settings_section'
+        );
+
+        add_settings_field(
             'modify_rss',
             'Modify RSS Feed',
             array($this, 'modify_rss_callback'),
@@ -187,6 +204,12 @@ Optional: Credit where you found the link with "via"</pre>
         
         if(isset($input['permalink_symbol']))
             $new_input['permalink_symbol'] = sanitize_text_field($input['permalink_symbol']);
+        
+        if(isset($input['show_permalink']))
+            $new_input['show_permalink'] = (bool)$input['show_permalink'];
+            
+        if(isset($input['permalink_position']))
+            $new_input['permalink_position'] = sanitize_text_field($input['permalink_position']);
         
         if(isset($input['modify_rss']))
             $new_input['modify_rss'] = (bool)$input['modify_rss'];
@@ -212,6 +235,25 @@ Optional: Credit where you found the link with "via"</pre>
         );
     }
 
+    public function show_permalink_callback() {
+        $show_permalink = isset($this->options['show_permalink']) ? $this->options['show_permalink'] : true;
+        printf(
+            '<input type="checkbox" id="show_permalink" name="link_blog_options[show_permalink]" %s />',
+            checked($show_permalink, true, false)
+        );
+        echo '<label for="show_permalink"> Enable permalink symbol in post titles</label>';
+    }
+
+    public function permalink_position_callback() {
+        $position = isset($this->options['permalink_position']) ? $this->options['permalink_position'] : 'prefix';
+        ?>
+        <select name="link_blog_options[permalink_position]" id="permalink_position">
+            <option value="prefix" <?php selected($position, 'prefix'); ?>>Before title (Prefix)</option>
+            <option value="suffix" <?php selected($position, 'suffix'); ?>>After title (Suffix)</option>
+        </select>
+        <?php
+    }
+
     public function modify_rss_callback() {
         printf(
             '<input type="checkbox" id="modify_rss" name="link_blog_options[modify_rss]" value="1" %s />
@@ -220,7 +262,71 @@ Optional: Credit where you found the link with "via"</pre>
         );
     }
 
-    // Remaining class methods
+    public function check_links_category() {
+        $options = get_option('link_blog_options');
+        $category_name = isset($options['category_name']) ? $options['category_name'] : 'Links';
+        
+        $category = get_term_by('name', $category_name, 'category');
+        if (!$category) {
+            ?>
+            <div class="notice notice-warning is-dismissible">
+                <p>
+                    <strong>Link Blog and Go:</strong> The "<?php echo esc_html($category_name); ?>" category does not exist. 
+                    This category is required for the plugin to work properly. 
+                    <a href="<?php echo esc_url(admin_url('edit-tags.php?taxonomy=category')); ?>">Would you like to create it now?</a>
+                </p>
+            </div>
+            <?php
+        }
+    }
+
+    public function style_link_posts($content) {
+        global $post;
+        $options = get_option('link_blog_options');
+        $category_name = isset($options['category_name']) ? $options['category_name'] : 'Links';
+        $show_permalink = isset($options['show_permalink']) ? $options['show_permalink'] : true;
+        $permalink_position = isset($options['permalink_position']) ? $options['permalink_position'] : 'prefix';
+        
+        // Check if post is in the links category
+        if (has_category($category_name, $post)) {
+            // Extract first URL from content
+            preg_match('/(https?:\/\/[^\s<>"]+)/i', $content, $matches);
+            if (!empty($matches)) {
+                $url = $matches[1];
+                $domain = parse_url($url, PHP_URL_HOST);
+                
+                // Add source attribution
+                $content .= sprintf(
+                    '<p class="source-link">Source: <a href="%s">%s</a></p>',
+                    esc_url($url),
+                    esc_html($domain)
+                );
+                
+                // Add permalink if enabled
+                if ($show_permalink) {
+                    $permalink_symbol = isset($options['permalink_symbol']) ? $options['permalink_symbol'] : '★';
+                    $permalink_html = sprintf(
+                        '<a href="%s" class="permalink-symbol">%s</a>',
+                        get_permalink(),
+                        esc_html($permalink_symbol)
+                    );
+                    
+                    // Add permalink based on position setting
+                    if ($permalink_position === 'prefix') {
+                        add_filter('the_title', function($title) use ($permalink_html) {
+                            return $permalink_html . ' ' . $title;
+                        });
+                    } else {
+                        add_filter('the_title', function($title) use ($permalink_html) {
+                            return $title . ' ' . $permalink_html;
+                        });
+                    }
+                }
+            }
+        }
+        return $content;
+    }
+
     public function create_link_category() {
         $options = get_option('link_blog_options');
         $category_name = isset($options['category_name']) ? $options['category_name'] : 'Links';
@@ -236,37 +342,6 @@ Optional: Credit where you found the link with "via"</pre>
         }
     }
 
-    public function style_link_posts($content) {
-        $options = get_option('link_blog_options');
-        $category_name = isset($options['category_name']) ? $options['category_name'] : 'Links';
-        $permalink_symbol = isset($options['permalink_symbol']) ? $options['permalink_symbol'] : '★';
-
-        if (is_single() && has_category($category_name)) {
-            // Get the source URL from the first URL in the post
-            $post_content = get_the_content();
-            preg_match('/(https?:\/\/[^\s<>"]+|www\.[^\s<>"]+)/', $post_content, $match);
-            $source_url = $match[0] ?? '';
-            
-            // Add source link and permalink star
-            $formatted_content = $content;
-            if ($source_url) {
-                $formatted_content .= sprintf(
-                    '<p class="source-link">Source: <a href="%s">%s</a></p>',
-                    esc_url($source_url),
-                    parse_url($source_url, PHP_URL_HOST)
-                );
-            }
-            $formatted_content .= sprintf(
-                '<div class="permalink"><a href="%s">&nbsp;%s&nbsp;</a></div>',
-                get_permalink(),
-                $permalink_symbol
-            );
-            
-            return $formatted_content;
-        }
-        return $content;
-    }
-
     public function customize_link_feed($content) {
         $options = get_option('link_blog_options');
         $category_name = isset($options['category_name']) ? $options['category_name'] : 'Links';
@@ -275,8 +350,8 @@ Optional: Credit where you found the link with "via"</pre>
             global $post;
             
             // Get the source URL
-            preg_match('/(https?:\/\/[^\s<>"]+|www\.[^\s<>"]+)/', $post->post_content, $match);
-            $source_url = $match[0] ?? '';
+            preg_match('/(https?:\/\/[^\s<>"]+)/i', $post->post_content, $match);
+            $source_url = $match[1] ?? '';
             
             // Format the feed content
             $feed_content = '<p>' . get_the_excerpt() . '</p>';

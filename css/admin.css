@@ -1,0 +1,53 @@
+/* Link Blog and Go Admin Styles */
+.wrap h1 .version {
+    font-size: 14px;
+    color: #646970;
+    font-weight: 400;
+}
+
+.card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 2px;
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.preview-container {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.preview-box {
+    flex: 1;
+    border: 1px solid #dcdcde;
+    padding: 15px;
+    background: #f6f7f7;
+}
+
+.preview-arrow {
+    color: #646970;
+    font-size: 24px;
+}
+
+.preview-content {
+    background: #fff;
+    padding: 15px;
+    border: 1px solid #dcdcde;
+}
+
+/* Fix for admin menu */
+#adminmenu .wp-submenu a {
+    font-size: 13px !important;
+    line-height: 1.4 !important;
+    margin: 0 !important;
+    padding: 8px 0 !important;
+}
+
+#adminmenu .wp-submenu {
+    min-width: 180px !important;
+    width: auto !important;
+}
