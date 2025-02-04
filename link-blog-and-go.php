@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Link Blog and Go
  * Description: Transform your WordPress blog into a link blog - easily share and comment on interesting links you find across the web
- * Version: 1.0.0-beta
+ * Version: 1.1.0
  * Author: Ashraf Ali
  * Author URI: https://ashrafali.net
  * License: MIT
@@ -16,15 +16,16 @@ if (!defined('ABSPATH')) {
 
 class LinkBlogSetup {
     private $options;
-    private $version = '1.0.0-beta';
+    private $version = '1.1.0';
 
     public function __construct() {
         add_action('admin_menu', array($this, 'add_plugin_page'));
         add_action('admin_init', array($this, 'page_init'));
         add_action('init', array($this, 'create_link_category'));
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
+        add_action('wp_ajax_create_links_category', array($this, 'ajax_create_links_category'));
         add_filter('the_content', array($this, 'style_link_posts'));
         add_action('wp_head', array($this, 'add_link_styles'));
-        add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_styles'));
         add_action('admin_notices', array($this, 'check_links_category'));
 
         // Only add RSS filters if enabled
@@ -35,11 +36,17 @@ class LinkBlogSetup {
         }
     }
 
-    public function enqueue_admin_styles($hook) {
+    public function enqueue_admin_assets($hook) {
         if ('settings_page_link-blog-settings' !== $hook) {
             return;
         }
+
         wp_enqueue_style('link-blog-admin', plugins_url('css/admin.css', __FILE__));
+        wp_enqueue_script('link-blog-admin', plugins_url('js/admin.js', __FILE__), array('jquery'), $this->version, true);
+        
+        wp_localize_script('link-blog-admin', 'linkBlogSettings', array(
+            'nonce' => wp_create_nonce('link_blog_nonce')
+        ));
     }
 
     public function add_plugin_page() {
@@ -58,80 +65,160 @@ class LinkBlogSetup {
         <div class="wrap">
             <h1>Link Blog and Go <span class="version">v<?php echo esc_html($this->version); ?></span></h1>
             
-            <div class="card">
-                <h2>How to Use Link Blog and Go</h2>
-                
-                <h3>Creating Link Posts</h3>
-                <ol>
-                    <li>Create a new post in WordPress</li>
-                    <li>Add it to your links category (default: "Links")</li>
-                    <li>Use this format for your posts:
-                        <pre>
+            <div class="card guide-card">
+                <h2>How to Write a Link Blog Post</h2>
+                <div class="guide-steps">
+                    <div class="guide-step">
+                        <span class="step-number">1</span>
+                        <h3>Create a New Post</h3>
+                        <p>Click "Add New" in the Posts menu and write your post title.</p>
+                    </div>
+                    <div class="guide-step">
+                        <span class="step-number">2</span>
+                        <h3>Add to Links Category</h3>
+                        <p>Select the "Links" category in the sidebar (or your custom category name).</p>
+                    </div>
+                    <div class="guide-step">
+                        <span class="step-number">3</span>
+                        <h3>Write Your Post</h3>
+                        <p>Follow this format:</p>
+                        <pre class="format-example">
 Title: Name of what you're linking to
 
-Your commentary about why this is interesting
+Your commentary about why this is interesting.
 
-Include the URL you're linking to somewhere in your text
+Include the URL you're linking to somewhere in your text:
+https://example.com/article
 
 Optional: Credit where you found the link with "via"</pre>
-                    </li>
-                </ol>
-
-                <h3>Preview</h3>
-                <div class="preview-container">
-                    <div class="preview-box">
-                        <h4>Original Post</h4>
-                        <div class="preview-content">
-                            <h2>Amazing New Technology Revealed</h2>
-                            <p>This is fascinating! Company X has developed something incredible. Read more at https://example.com/tech-news</p>
-                        </div>
                     </div>
-                    <div class="preview-arrow">→</div>
-                    <div class="preview-box">
-                        <h4>Formatted Link Post</h4>
-                        <div class="preview-content">
-                            <h2>Amazing New Technology Revealed</h2>
-                            <p>This is fascinating! Company X has developed something incredible. Read more at https://example.com/tech-news</p>
-                            <p class="source-link">Source: <a href="https://example.com/tech-news">example.com</a></p>
-                            <div class="permalink"><a href="#">★</a></div>
-                        </div>
+                    <div class="guide-step">
+                        <span class="step-number">4</span>
+                        <h3>Publish</h3>
+                        <p>The plugin will automatically format your post with:</p>
+                        <ul>
+                            <li>Permalink symbol (if enabled)</li>
+                            <li>Source attribution</li>
+                            <li>RSS feed enhancements (if enabled)</li>
+                        </ul>
                     </div>
                 </div>
-
-                <?php if (isset($this->options['modify_rss']) && $this->options['modify_rss']): ?>
-                <div class="preview-container">
-                    <div class="preview-box">
-                        <h4>Original RSS Feed</h4>
-                        <div class="preview-content">
-                            <pre>&lt;item&gt;
-  &lt;title&gt;Amazing New Technology Revealed&lt;/title&gt;
-  &lt;description&gt;This is fascinating...&lt;/description&gt;
-&lt;/item&gt;</pre>
-                        </div>
-                    </div>
-                    <div class="preview-arrow">→</div>
-                    <div class="preview-box">
-                        <h4>Modified RSS Feed</h4>
-                        <div class="preview-content">
-                            <pre>&lt;item&gt;
-  &lt;title&gt;★ Amazing New Technology Revealed&lt;/title&gt;
-  &lt;description&gt;This is fascinating...
-    Source: &lt;a href="https://example.com"&gt;example.com&lt;/a&gt;
-  &lt;/description&gt;
-&lt;/item&gt;</pre>
-                        </div>
-                    </div>
-                </div>
-                <?php endif; ?>
             </div>
 
-            <form method="post" action="options.php">
-                <?php
-                settings_fields('link_blog_options_group');
-                do_settings_sections('link-blog-settings');
-                submit_button();
+            <?php
+            // Check if Links category exists
+            $cat = get_category_by_slug('links');
+            if (!$cat) {
                 ?>
-            </form>
+                <div class="notice notice-warning is-dismissible">
+                    <p>
+                        The Links category doesn't exist yet. 
+                        <button type="button" class="button button-secondary" id="create-links-category">Create Links Category</button>
+                    </p>
+                </div>
+                <?php
+            }
+            ?>
+
+            <div class="card settings-card">
+                <form method="post" action="options.php">
+                    <?php settings_fields('link_blog_options_group'); ?>
+                    
+                    <h2>General Settings</h2>
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row">Link Category Name</th>
+                            <td>
+                                <input type="text" id="category_name" name="link_blog_options[category_name]" 
+                                    value="<?php echo isset($this->options['category_name']) ? esc_attr($this->options['category_name']) : 'Links'; ?>" 
+                                    class="regular-text preview-trigger" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Permalink Settings</th>
+                            <td>
+                                <fieldset>
+                                    <label>
+                                        <input type="checkbox" id="show_permalink" name="link_blog_options[show_permalink]" 
+                                            <?php checked(isset($this->options['show_permalink']) ? $this->options['show_permalink'] : true); ?> 
+                                            class="preview-trigger" />
+                                        Show permalink symbol
+                                    </label>
+                                    <br><br>
+                                    <input type="text" id="permalink_symbol" name="link_blog_options[permalink_symbol]" 
+                                        value="<?php echo isset($this->options['permalink_symbol']) ? esc_attr($this->options['permalink_symbol']) : '★'; ?>" 
+                                        class="small-text preview-trigger" />
+                                    <label for="permalink_symbol">Permalink symbol</label>
+                                    <br><br>
+                                    <select name="link_blog_options[permalink_position]" id="permalink_position" class="preview-trigger">
+                                        <option value="before" <?php selected(isset($this->options['permalink_position']) ? $this->options['permalink_position'] : 'before', 'before'); ?>>Before title</option>
+                                        <option value="after" <?php selected(isset($this->options['permalink_position']) ? $this->options['permalink_position'] : 'before', 'after'); ?>>After title</option>
+                                    </select>
+                                    <label for="permalink_position">Symbol position</label>
+                                </fieldset>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">RSS Feed Settings</th>
+                            <td>
+                                <fieldset>
+                                    <label>
+                                        <input type="checkbox" id="modify_rss" name="link_blog_options[modify_rss]" 
+                                            <?php checked(isset($this->options['modify_rss']) ? $this->options['modify_rss'] : false); ?> 
+                                            class="preview-trigger" />
+                                        Enable RSS feed modifications
+                                    </label>
+                                    <br><br>
+                                    <div class="rss-options" style="margin-left: 25px;">
+                                        <label>
+                                            <input type="checkbox" id="rss_show_symbol" name="link_blog_options[rss_show_symbol]" 
+                                                <?php checked(isset($this->options['rss_show_symbol']) ? $this->options['rss_show_symbol'] : true); ?> 
+                                                class="preview-trigger" />
+                                            Show permalink symbol in RSS titles
+                                        </label>
+                                        <br><br>
+                                        <select name="link_blog_options[rss_symbol_position]" id="rss_symbol_position" class="preview-trigger">
+                                            <option value="before" <?php selected(isset($this->options['rss_symbol_position']) ? $this->options['rss_symbol_position'] : 'before', 'before'); ?>>Before title</option>
+                                            <option value="after" <?php selected(isset($this->options['rss_symbol_position']) ? $this->options['rss_symbol_position'] : 'before', 'after'); ?>>After title</option>
+                                        </select>
+                                        <label for="rss_symbol_position">Symbol position in RSS</label>
+                                        <br><br>
+                                        <label>
+                                            <input type="checkbox" id="rss_show_source" name="link_blog_options[rss_show_source]" 
+                                                <?php checked(isset($this->options['rss_show_source']) ? $this->options['rss_show_source'] : true); ?> 
+                                                class="preview-trigger" />
+                                            Show source link in RSS description
+                                        </label>
+                                    </div>
+                                </fieldset>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <?php submit_button(); ?>
+                </form>
+            </div>
+
+            <div class="card preview-card">
+                <h2>Live Preview</h2>
+                <div class="preview-container">
+                    <div class="preview-box">
+                        <h4>Post Preview</h4>
+                        <div class="preview-content" id="post-preview">
+                            <h2 id="preview-title">Amazing New Technology Revealed</h2>
+                            <p>This is fascinating! Company X has developed something incredible. Read more at <a href="https://example.com/tech-news">https://example.com/tech-news</a></p>
+                            <p class="source-link">Source: <a href="https://example.com/tech-news">example.com</a></p>
+                        </div>
+                    </div>
+                    
+                    <div class="preview-box" id="rss-preview-container">
+                        <h4>RSS Feed Preview</h4>
+                        <div class="preview-content">
+                            <pre id="rss-preview"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <div class="card">
                 <h3>About the Author</h3>
@@ -311,15 +398,11 @@ Optional: Credit where you found the link with "via"</pre>
                         esc_html($permalink_symbol)
                     );
                     
-                    // Add permalink based on position setting
+                    // Add permalink to content instead of modifying title
                     if ($permalink_position === 'prefix') {
-                        add_filter('the_title', function($title) use ($permalink_html) {
-                            return $permalink_html . ' ' . $title;
-                        });
+                        $content = $permalink_html . ' ' . $content;
                     } else {
-                        add_filter('the_title', function($title) use ($permalink_html) {
-                            return $title . ' ' . $permalink_html;
-                        });
+                        $content .= ' ' . $permalink_html;
                     }
                 }
             }
@@ -397,78 +480,36 @@ Optional: Credit where you found the link with "via"</pre>
         </style>
         <?php
     }
-}
 
-// Create the CSS file
-function create_admin_css() {
-    $css = <<<CSS
-.version {
-    font-size: 12px;
-    color: #666;
-    font-weight: normal;
-}
+    public function ajax_create_links_category() {
+        check_ajax_referer('link_blog_nonce', 'nonce');
+        
+        if (!current_user_can('manage_categories')) {
+            wp_send_json_error(array('message' => 'Permission denied'));
+        }
 
-.card {
-    max-width: 800px;
-    padding: 20px;
-    background: #fff;
-    margin: 20px 0;
-    border: 1px solid #ccd0d4;
-    box-shadow: 0 1px 1px rgba(0,0,0,.04);
-}
+        $category_name = isset($this->options['category_name']) ? $this->options['category_name'] : 'Links';
+        $category_slug = sanitize_title($category_name);
 
-.preview-container {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    margin: 20px 0;
-    flex-wrap: wrap;
-}
+        if (term_exists($category_slug, 'category')) {
+            wp_send_json_error(array('message' => 'Category already exists'));
+            return;
+        }
 
-.preview-box {
-    flex: 1;
-    min-width: 300px;
-    border: 1px solid #ddd;
-    padding: 15px;
-    background: #f9f9f9;
-}
+        $result = wp_insert_term(
+            $category_name,
+            'category',
+            array(
+                'slug' => $category_slug
+            )
+        );
 
-.preview-arrow {
-    font-size: 24px;
-    color: #666;
-}
-
-.preview-content {
-    background: white;
-    padding: 15px;
-    border: 1px solid #eee;
-}
-
-pre {
-    background: #f5f5f5;
-    padding: 10px;
-    margin: 10px 0;
-    overflow-x: auto;
-}
-
-ol, ul {
-    margin-left: 20px;
-}
-
-ol {
-    list-style-type: decimal;
-}
-
-ul {
-    list-style-type: disc;
-}
-CSS;
-
-    $css_dir = plugin_dir_path(__FILE__) . 'css';
-    if (!file_exists($css_dir)) {
-        mkdir($css_dir, 0755, true);
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
+        } else {
+            wp_send_json_success(array('message' => 'Category created successfully'));
+        }
     }
-    file_put_contents($css_dir . '/admin.css', $css);
 }
 
 // Initialize the plugin
@@ -480,6 +521,5 @@ if (is_admin()) {
 function activate_link_blog_plugin() {
     $link_blog_setup = new LinkBlogSetup();
     $link_blog_setup->create_link_category();
-    create_admin_css();
 }
 register_activation_hook(__FILE__, 'activate_link_blog_plugin');

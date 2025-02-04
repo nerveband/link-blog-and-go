@@ -1,8 +1,10 @@
 # Link Blog and Go
 
-> ⚠️ **Alpha Status**: This plugin is currently in alpha and untested. It's being developed as part of my personal blog redesign project.
+> ⚠️ **Beta Status**: This plugin is now in beta, with improved handling of post titles and link formatting.
 
 Transform your WordPress blog into a link blog - easily share and comment on interesting links you find across the web.
+
+Version: 1.1.0
 
 ## What is a Link Blog?
 
@@ -13,12 +15,13 @@ A link blog is a type of blog where posts primarily consist of interesting links
 ## Features
 
 - 🔗 Automatically formats link posts with source attribution
-- ⭐ Adds a distinctive permalink symbol to link posts
+- ⭐ Adds a distinctive permalink symbol to link posts (without modifying post titles)
 - 📱 Clean, minimal design that works with any theme
 - 📰 Optional RSS feed enhancements for link posts
+- 🎯 Category-specific: Only affects posts in your designated links category
 - ⚙️ Customizable settings:
   - Custom category name for link posts
-  - Customizable permalink symbol
+  - Customizable permalink symbol and position
   - RSS feed modifications toggle
 
 ## How It Works
@@ -39,8 +42,9 @@ A link blog is a type of blog where posts primarily consist of interesting links
 The plugin will automatically:
 - Extract the first URL it finds in your post
 - Add a source attribution at the bottom
-- Add a permalink symbol for easy reference
+- Add a permalink symbol for easy reference (in the post content, not the title)
 - Style the post distinctively (while staying compatible with your theme)
+- Only apply these changes to posts in your designated links category
 
 ## Installation
 
@@ -54,16 +58,31 @@ The plugin will automatically:
 Access plugin settings under Settings > Link Blog and Go to customize:
 
 - **Link Category Name**: Change the default "Links" category name
-- **Permalink Symbol**: Change the default "★" symbol
+- **Permalink Symbol**: Change the default "★" symbol and its position
 - **RSS Feed Modifications**: Toggle enhanced RSS feed formatting for link posts
+
+## Key Features
+
+### Category-Specific Processing
+- Changes only apply to posts in your designated links category
+- Other posts remain completely unaffected
+- Easy to manage which posts get the link blog treatment
+
+### Non-Destructive Formatting
+- Preserves your original post titles
+- Adds permalink symbols and formatting without modifying the database
+- Easily reversible - disable the plugin to return to original formatting
 
 ## Development Status
 
-This plugin is currently in **alpha** status and is untested in production environments. It's being developed as part of my personal blog redesign project. Use at your own risk in production environments.
+This plugin is now in **beta** status with improved stability and handling of post formatting. Recent updates include:
+- ✅ Non-destructive title handling
+- ✅ Improved category-specific processing
+- ✅ Enhanced customization options
 
 ## Contributing
 
-This is a personal project in early development, but feel free to:
+This is a personal project in active development. Feel free to:
 
 1. Fork the repo
 2. Create a feature branch
