@@ -5,6 +5,28 @@ All notable changes to Link Blog and Go will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.3] - 2025-01-17
+
+### Added
+- **Auto-Link Control**: Added option to disable automatic link appending to posts
+- **Title Display Control**: Added checkboxes to disable "Link Blog Link Title" and "Via Link Title"
+- **Fixed Bricks Builder Dynamic Tags**: Implemented proper Bricks Builder integration using correct filter hooks
+- New Bricks dynamic tags that actually work:
+  - `{link_blog_link}` - Main URL
+  - `{link_blog_via}` - Via URL  
+  - `{link_blog_domain}` - Main domain
+  - `{link_blog_via_domain}` - Via domain
+
+### Changed
+- Auto-append behavior is now optional (can be disabled in settings)
+- Link and via title display can be individually controlled
+- Fixed Bricks Builder dynamic tag registration using proper WordPress filters
+- Enhanced admin interface with Auto-Link Behavior section
+
+### Fixed
+- Bricks Builder dynamic tags now properly register and render in the builder
+- Fixed dynamic tag content replacement in Bricks templates
+
 ## [1.2.2] - 2025-01-17
 
 ### Added

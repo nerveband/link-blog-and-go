@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Link Blog and Go
  * Description: Transform your WordPress blog into a link blog - easily share and comment on interesting links you find across the web. <a href="https://github.com/nerveband/link-blog-and-go">GitHub Repository</a>
- * Version: 1.2.2
+ * Version: 1.2.3
  * Author: Ashraf Ali
  * Author URI: https://ashrafali.net
  * License: MIT
@@ -205,7 +205,7 @@ class Provider_Link_Blog {
 
 class LinkBlogSetup {
     private $options;
-    private $version = '1.2.0';
+    private $version = '1.2.3';
 
     public function __construct() {
         // Initialize options
@@ -217,6 +217,12 @@ class LinkBlogSetup {
 
         // Add Bricks echo function filter
         add_filter('bricks/code/echo_function_names', array($this, 'register_echo_functions'));
+        
+        // Register Bricks dynamic tags using the proper filter
+        add_filter('bricks/dynamic_tags_list', array($this, 'register_bricks_dynamic_tags'));
+        add_filter('bricks/dynamic_data/render_tag', array($this, 'render_bricks_dynamic_tag'), 20, 3);
+        add_filter('bricks/dynamic_data/render_content', array($this, 'render_bricks_content'), 20, 3);
+        add_filter('bricks/frontend/render_data', array($this, 'render_bricks_content'), 20, 2);
 
         add_action('admin_menu', array($this, 'add_plugin_page'));
         add_action('admin_init', array($this, 'page_init'));
@@ -278,6 +284,96 @@ class LinkBlogSetup {
             'link_blog_get_domain_link',
             'link_blog_get_via_domain_link'
         );
+    }
+    
+    /**
+     * Register dynamic tags for Bricks Builder
+     */
+    public function register_bricks_dynamic_tags($tags) {
+        $tags[] = [
+            'name' => '{link_blog_link}',
+            'label' => 'Link Blog URL',
+            'group' => 'Link Blog',
+        ];
+        
+        $tags[] = [
+            'name' => '{link_blog_via}',
+            'label' => 'Link Blog Via URL',
+            'group' => 'Link Blog',
+        ];
+        
+        $tags[] = [
+            'name' => '{link_blog_domain}',
+            'label' => 'Link Blog Domain',
+            'group' => 'Link Blog',
+        ];
+        
+        $tags[] = [
+            'name' => '{link_blog_via_domain}',
+            'label' => 'Link Blog Via Domain',
+            'group' => 'Link Blog',
+        ];
+        
+        return $tags;
+    }
+    
+    /**
+     * Render Bricks dynamic tag values
+     */
+    public function render_bricks_dynamic_tag($tag, $post, $context = 'text') {
+        if (!is_string($tag)) {
+            return $tag;
+        }
+        
+        $clean_tag = str_replace(['{', '}'], '', $tag);
+        
+        switch ($clean_tag) {
+            case 'link_blog_link':
+                return $this->extract_url_from_content($post->post_content, $post->ID);
+                
+            case 'link_blog_via':
+                return $this->extract_via_url_from_content($post->post_content, $post->ID);
+                
+            case 'link_blog_domain':
+                $url = $this->extract_url_from_content($post->post_content, $post->ID);
+                return $url ? $this->extract_domain_from_url($url) : '';
+                
+            case 'link_blog_via_domain':
+                $via_url = $this->extract_via_url_from_content($post->post_content, $post->ID);
+                return $via_url ? $this->extract_domain_from_url($via_url) : '';
+        }
+        
+        return $tag;
+    }
+    
+    /**
+     * Render content with Bricks dynamic tags
+     */
+    public function render_bricks_content($content, $post = null, $context = 'text') {
+        if (!$post && isset($GLOBALS['post'])) {
+            $post = $GLOBALS['post'];
+        }
+        
+        if (!$post || strpos($content, '{link_blog_') === false) {
+            return $content;
+        }
+        
+        // Replace link blog tags
+        $url = $this->extract_url_from_content($post->post_content, $post->ID);
+        if ($url) {
+            $content = str_replace('{link_blog_link}', $url, $content);
+            $domain = $this->extract_domain_from_url($url);
+            $content = str_replace('{link_blog_domain}', $domain, $content);
+        }
+        
+        $via_url = $this->extract_via_url_from_content($post->post_content, $post->ID);
+        if ($via_url) {
+            $content = str_replace('{link_blog_via}', $via_url, $content);
+            $via_domain = $this->extract_domain_from_url($via_url);
+            $content = str_replace('{link_blog_via_domain}', $via_domain, $content);
+        }
+        
+        return $content;
     }
 
     /**
@@ -442,6 +538,9 @@ class LinkBlogSetup {
             'rss_symbol_position' => 'before',
             'rss_show_source' => true,
             'enable_custom_fields' => false,
+            'show_link_title' => true,
+            'show_via_title' => true,
+            'auto_append_links' => true,
             'link_blog_title' => 'Link Blog Link',
             'via_link_title' => 'Via Link',
             'domain_before_text' => '→ ',
@@ -657,6 +756,24 @@ Optional: Use shortcodes for custom placement:
                             </td>
                         </tr>
                         <tr>
+                            <th scope="row">Auto-Link Behavior</th>
+                            <td>
+                                <fieldset>
+                                    <legend class="screen-reader-text"><span>Auto-Link Options</span></legend>
+                                    <label>
+                                        <input type="checkbox" id="auto_append_links" name="link_blog_options[auto_append_links]" 
+                                            <?php checked(isset($this->options['auto_append_links']) ? $this->options['auto_append_links'] : true); ?> 
+                                            class="preview-trigger" />
+                                        Automatically append domain links to posts
+                                    </label>
+                                    <p class="description">
+                                        When enabled, domain links are automatically added to the end of posts in the links category.<br>
+                                        When disabled, you must manually place shortcodes or variables where you want them to appear.
+                                    </p>
+                                </fieldset>
+                            </td>
+                        </tr>
+                        <tr>
                             <th scope="row">Custom Link Fields</th>
                             <td>
                                 <fieldset>
@@ -669,10 +786,24 @@ Optional: Use shortcodes for custom placement:
                                     <br><br>
                                     <div class="custom-fields-options" style="margin-left: 25px;">
                                         <label>
+                                            <input type="checkbox" id="show_link_title" name="link_blog_options[show_link_title]" 
+                                                <?php checked(isset($this->options['show_link_title']) ? $this->options['show_link_title'] : true); ?> 
+                                                class="preview-trigger" />
+                                            Show Link Blog Link Title
+                                        </label>
+                                        <br><br>
+                                        <label>
                                             Link Blog Link Title:
                                             <input type="text" id="link_blog_title" name="link_blog_options[link_blog_title]" 
                                                 value="<?php echo isset($this->options['link_blog_title']) ? esc_attr($this->options['link_blog_title']) : 'Link Blog Link'; ?>" 
                                                 class="regular-text preview-trigger" />
+                                        </label>
+                                        <br><br>
+                                        <label>
+                                            <input type="checkbox" id="show_via_title" name="link_blog_options[show_via_title]" 
+                                                <?php checked(isset($this->options['show_via_title']) ? $this->options['show_via_title'] : true); ?> 
+                                                class="preview-trigger" />
+                                            Show Via Link Title
                                         </label>
                                         <br><br>
                                         <label>
@@ -886,9 +1017,19 @@ Optional: Use shortcodes for custom placement:
         $new_input['rss_show_source'] = isset($input['rss_show_source']) ? 
             (bool)$input['rss_show_source'] : $defaults['rss_show_source'];
             
+        // Auto-append links setting
+        $new_input['auto_append_links'] = isset($input['auto_append_links']) ? 
+            (bool)$input['auto_append_links'] : $defaults['auto_append_links'];
+            
         // Custom fields settings
         $new_input['enable_custom_fields'] = isset($input['enable_custom_fields']) ? 
             (bool)$input['enable_custom_fields'] : $defaults['enable_custom_fields'];
+            
+        $new_input['show_link_title'] = isset($input['show_link_title']) ? 
+            (bool)$input['show_link_title'] : $defaults['show_link_title'];
+            
+        $new_input['show_via_title'] = isset($input['show_via_title']) ? 
+            (bool)$input['show_via_title'] : $defaults['show_via_title'];
             
         $new_input['link_blog_title'] = !empty($input['link_blog_title']) ? 
             sanitize_text_field($input['link_blog_title']) : $defaults['link_blog_title'];
@@ -1040,8 +1181,9 @@ Optional: Use shortcodes for custom placement:
                 // Check if user has manually placed link blog shortcodes or variables
                 $has_manual_placement = $this->has_manual_link_placement($content);
                 
-                // Only add automatic source attribution if no manual placement exists
-                if (!$has_manual_placement) {
+                // Check if auto-append is enabled and no manual placement exists
+                $auto_append = isset($options['auto_append_links']) ? $options['auto_append_links'] : true;
+                if ($auto_append && !$has_manual_placement) {
                     $before_text = isset($options['domain_before_text']) ? $options['domain_before_text'] : '→ ';
                     $after_text = isset($options['domain_after_text']) ? $options['domain_after_text'] : '';
                     
@@ -1246,6 +1388,14 @@ Optional: Use shortcodes for custom placement:
             return '';
         }
 
+        $show_title = isset($options['show_link_title']) ? $options['show_link_title'] : true;
+        if (!$show_title) {
+            return sprintf('<div class="link-blog-custom-link"><a href="%s">%s</a></div>',
+                esc_url($url),
+                esc_url($url)
+            );
+        }
+
         return sprintf('<div class="link-blog-custom-link"><strong>%s:</strong> <a href="%s">%s</a></div>',
             esc_html($atts['title']),
             esc_url($url),
@@ -1270,6 +1420,14 @@ Optional: Use shortcodes for custom placement:
         $via_url = $this->extract_via_url_from_content(get_the_content(), $post->ID);
         if (!$via_url) {
             return '';
+        }
+
+        $show_title = isset($options['show_via_title']) ? $options['show_via_title'] : true;
+        if (!$show_title) {
+            return sprintf('<div class="link-blog-via-link"><a href="%s">%s</a></div>',
+                esc_url($via_url),
+                esc_url($via_url)
+            );
         }
 
         return sprintf('<div class="link-blog-via-link"><strong>%s:</strong> <a href="%s">%s</a></div>',
@@ -1361,12 +1519,21 @@ Optional: Use shortcodes for custom placement:
         $via_url = $this->extract_via_url_from_content($content, $post->ID);
 
         if ($url) {
+            $show_title = isset($options['show_link_title']) ? $options['show_link_title'] : true;
             $link_title = isset($options['link_blog_title']) ? $options['link_blog_title'] : 'Link Blog Link';
-            $link_html = sprintf('<div class="link-blog-custom-link"><strong>%s:</strong> <a href="%s">%s</a></div>',
-                esc_html($link_title),
-                esc_url($url),
-                esc_url($url)
-            );
+            
+            if ($show_title) {
+                $link_html = sprintf('<div class="link-blog-custom-link"><strong>%s:</strong> <a href="%s">%s</a></div>',
+                    esc_html($link_title),
+                    esc_url($url),
+                    esc_url($url)
+                );
+            } else {
+                $link_html = sprintf('<div class="link-blog-custom-link"><a href="%s">%s</a></div>',
+                    esc_url($url),
+                    esc_url($url)
+                );
+            }
             $content = str_replace('{link_blog_link}', $link_html, $content);
             
             // Add domain variable support
@@ -1383,12 +1550,21 @@ Optional: Use shortcodes for custom placement:
         }
 
         if ($via_url) {
+            $show_title = isset($options['show_via_title']) ? $options['show_via_title'] : true;
             $via_title = isset($options['via_link_title']) ? $options['via_link_title'] : 'Via Link';
-            $via_html = sprintf('<div class="link-blog-via-link"><strong>%s:</strong> <a href="%s">%s</a></div>',
-                esc_html($via_title),
-                esc_url($via_url),
-                esc_url($via_url)
-            );
+            
+            if ($show_title) {
+                $via_html = sprintf('<div class="link-blog-via-link"><strong>%s:</strong> <a href="%s">%s</a></div>',
+                    esc_html($via_title),
+                    esc_url($via_url),
+                    esc_url($via_url)
+                );
+            } else {
+                $via_html = sprintf('<div class="link-blog-via-link"><a href="%s">%s</a></div>',
+                    esc_url($via_url),
+                    esc_url($via_url)
+                );
+            }
             $content = str_replace('{via_link}', $via_html, $content);
             
             // Add via domain variable support
