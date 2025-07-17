@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*.*.*'
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -39,41 +42,6 @@ jobs:
     - name: Create zip file
       run: zip -r link-blog-and-go.zip link-blog-and-go/
     
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Link Blog and Go v${{ steps.tag_version.outputs.VERSION }}
-        body: |
-          ## Link Blog and Go v${{ steps.tag_version.outputs.VERSION }}
-          
-          ### Installation
-          1. Download `link-blog-and-go.zip` from the assets below
-          2. In WordPress admin, go to Plugins → Add New → Upload Plugin
-          3. Choose the downloaded zip file and click Install Now
-          4. Activate the plugin
-          
-          ### What's New
-          Please see the [changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
-          
-          ### Auto-Update Support
-          This plugin includes built-in auto-update functionality. Once installed, it will check for updates directly from GitHub.
-        draft: false
-        prerelease: false
-    
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./link-blog-and-go.zip
-        asset_name: link-blog-and-go.zip
-        asset_content_type: application/zip
-    
     - name: Generate update info JSON
       run: |
         cat > update-info.json << EOF
@@ -91,12 +59,41 @@ jobs:
         }
         EOF
     
-    - name: Upload update info
-      uses: actions/upload-release-asset@v1
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          link-blog-and-go.zip
+          update-info.json
+        name: Link Blog and Go v${{ steps.tag_version.outputs.VERSION }}
+        body: |
+          ## 🚀 Link Blog and Go v${{ steps.tag_version.outputs.VERSION }}
+          
+          ### 🌟 Major Features
+          - **Domain extraction**: Shows clean domain names (e.g., "defector.com") instead of full URLs
+          - **Auto-update system**: Direct updates from GitHub without WordPress.org
+          - **New Bricks Builder domain tags**: `{link_blog_domain}` and `{link_blog_via_domain}`
+          - **Domain-specific shortcodes**: `[link_blog_domain]` and `[via_domain]`
+          
+          ### 🎨 UI Improvements
+          - Cleaner source attribution with arrow symbol (→)
+          - Enhanced admin settings page with GitHub links
+          - Updated documentation and examples
+          
+          ### 📦 Installation
+          1. Download `link-blog-and-go.zip` from the assets below
+          2. In WordPress admin, go to Plugins → Add New → Upload Plugin
+          3. Choose the downloaded zip file and click Install Now
+          4. Activate the plugin
+          
+          ### 🔄 Auto-Update Support
+          This plugin includes built-in auto-update functionality. Once installed, it will check for updates directly from GitHub.
+          
+          ### 📚 Documentation
+          - [📖 Full Documentation](https://github.com/${{ github.repository }}/blob/main/README.md)
+          - [📝 Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
+          - [🔧 Auto-Update Guide](https://github.com/${{ github.repository }}/blob/main/docs/AUTO-UPDATE.md)
+        draft: false
+        prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./update-info.json
-        asset_name: update-info.json
-        asset_content_type: application/json
