@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Link Blog and Go
  * Description: Transform your WordPress blog into a link blog - easily share and comment on interesting links you find across the web. <a href="https://github.com/nerveband/link-blog-and-go">GitHub Repository</a>
- * Version: 1.2.4
+ * Version: 1.2.5
  * Author: Ashraf Ali
  * Author URI: https://ashrafali.net
  * License: MIT
@@ -205,7 +205,7 @@ class Provider_Link_Blog {
 
 class LinkBlogSetup {
     private $options;
-    private $version = '1.2.4';
+    private $version = '1.2.5';
 
     public function __construct() {
         // Initialize options
@@ -982,6 +982,18 @@ class LinkBlogSetup {
                     <div class="sidebar-card">
                         <h3>📋 Recent Changes</h3>
                         <div class="changelog">
+                            <div class="changelog-item">
+                                <div class="version-badge">v1.2.5</div>
+                                <div class="changelog-content">
+                                    <strong>Modern Admin Interface Redesign</strong>
+                                    <ul>
+                                        <li>Complete card-based layout redesign</li>
+                                        <li>Organized settings into logical sections</li>
+                                        <li>Enhanced sidebar with guide and support</li>
+                                        <li>Improved responsive design</li>
+                                    </ul>
+                                </div>
+                            </div>
                             <div class="changelog-item">
                                 <div class="version-badge">v1.2.4</div>
                                 <div class="changelog-content">

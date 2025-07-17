@@ -5,6 +5,28 @@ All notable changes to Link Blog and Go will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.5] - 2025-01-17
+
+### Added
+- **Modern Admin Interface**: Complete redesign of settings page with card-based layout
+- **Organized Settings**: Grouped settings into logical sections (Basic, Permalink, Domain, RSS, Advanced)
+- **Enhanced Sidebar**: Added comprehensive sidebar with quick guide, changelog, and support links
+- **Custom Checkbox Styling**: Modern, accessible checkbox design with hover states
+- **Responsive Design**: Improved mobile and tablet experience
+- **Visual Hierarchy**: Better typography, spacing, and organization throughout
+
+### Changed
+- Replaced table-based layout with modern grid system
+- Improved visual feedback with hover states and transitions
+- Enhanced help text and examples throughout interface
+- Better organization of update system and plugin information
+
+### Improved
+- User experience is significantly more intuitive and beautiful
+- Settings are easier to understand with clear descriptions
+- Professional appearance that matches modern WordPress standards
+- Accessibility improvements with better contrast and focus states
+
 ## [1.2.4] - 2025-01-17
 
 ### Added

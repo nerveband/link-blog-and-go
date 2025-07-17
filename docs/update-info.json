@@ -1,17 +1,17 @@
 {
   "name": "Link Blog and Go",
   "slug": "link-blog-and-go",
-  "version": "1.2.0",
+  "version": "1.2.5",
   "download_url": "https://github.com/nerveband/link-blog-and-go/releases/latest/download/link-blog-and-go.zip",
   "homepage": "https://github.com/nerveband/link-blog-and-go",
   "requires": "5.0",
   "tested": "6.4",
   "requires_php": "7.2",
-  "last_updated": "2024-01-17 00:00:00",
+  "last_updated": "2025-01-17 00:00:00",
   "sections": {
     "description": "Transform your WordPress blog into a link blog with automatic domain extraction for clean, professional link attribution.",
     "installation": "Download and install through WordPress admin, or upload the plugin files to your /wp-content/plugins/ directory.",
-    "changelog": "<h4>1.2.0</h4><ul><li>Added domain extraction feature</li><li>New Bricks Builder domain tags</li><li>Auto-update support from GitHub</li><li>Cleaner source attribution</li></ul>"
+    "changelog": "<h4>1.2.5</h4><ul><li>Complete admin interface redesign with modern card-based layout</li><li>Organized settings into logical sections</li><li>Enhanced sidebar with quick guide, changelog, and support</li><li>Custom checkbox styling and improved responsive design</li><li>Better visual hierarchy and user experience</li></ul><h4>1.2.4</h4><ul><li>Added manual update system with check and trigger functionality</li><li>Real-time update status display</li><li>Enhanced admin interface</li></ul>"
   },
   "banners": {
     "low": "https://raw.githubusercontent.com/nerveband/link-blog-and-go/main/assets/banner-772x250.jpg",
