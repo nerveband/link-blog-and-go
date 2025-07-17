@@ -315,6 +315,86 @@
     background: color-mix(in srgb, var(--primary-color) 90%, black);
 }
 
+/* Update Interface Styles */
+.settings_page_link-blog-settings .update-status {
+    margin-bottom: var(--spacing-lg);
+}
+
+.settings_page_link-blog-settings .update-status p {
+    margin: var(--spacing-sm) 0;
+}
+
+.settings_page_link-blog-settings #check-updates-btn,
+.settings_page_link-blog-settings #force-update-btn {
+    position: relative;
+    padding: 8px var(--spacing-md);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    line-height: 1.4;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.settings_page_link-blog-settings #check-updates-btn:disabled,
+.settings_page_link-blog-settings #force-update-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.settings_page_link-blog-settings #check-updates-btn .dashicons,
+.settings_page_link-blog-settings #force-update-btn .dashicons {
+    font-size: 16px;
+    margin-right: var(--spacing-xs);
+    vertical-align: middle;
+}
+
+.settings_page_link-blog-settings #update-progress {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--background-light);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+}
+
+.settings_page_link-blog-settings #update-progress .spinner {
+    visibility: visible;
+    margin-right: var(--spacing-sm);
+}
+
+.settings_page_link-blog-settings #update-info .notice {
+    margin: var(--spacing-md) 0;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-sm);
+}
+
+.settings_page_link-blog-settings #update-info .notice.notice-warning {
+    background: #fff8e1;
+    border-left-color: var(--warning-color);
+}
+
+.settings_page_link-blog-settings #update-info .notice.notice-success {
+    background: #f0f9ff;
+    border-left-color: var(--success-color);
+}
+
+.settings_page_link-blog-settings #update-info .notice.notice-error {
+    background: #fef2f2;
+    border-left-color: #dc2626;
+}
+
+.settings_page_link-blog-settings #update-info .notice p {
+    margin: var(--spacing-xs) 0;
+}
+
+.settings_page_link-blog-settings #update-info .notice p:first-child {
+    margin-top: 0;
+}
+
+.settings_page_link-blog-settings #update-info .notice p:last-child {
+    margin-bottom: 0;
+}
+
 /* Responsive Adjustments */
 @media screen and (max-width: 782px) {
     .settings_page_link-blog-settings .form-table th {

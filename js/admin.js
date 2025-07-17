@@ -17,6 +17,11 @@ jQuery(document).ready(function($) {
     const $rssPreviewContainer = $('#rss-preview-container');
     const $rssOptions = $('.rss-options');
     const $createLinksCategory = $('#create-links-category');
+    const $checkUpdatesBtn = $('#check-updates-btn');
+    const $forceUpdateBtn = $('#force-update-btn');
+    const $updateProgress = $('#update-progress');
+    const $updateProgressText = $('#update-progress-text');
+    const $updateInfo = $('#update-info');
 
     // Sample data for preview
     const sampleTitle = 'Amazing New Technology Revealed';
@@ -60,6 +65,121 @@ jQuery(document).ready(function($) {
             }
         });
     });
+
+    // Handle update checks
+    $checkUpdatesBtn.on('click', function(e) {
+        e.preventDefault();
+        checkForUpdates();
+    });
+    
+    // Handle force update
+    $forceUpdateBtn.on('click', function(e) {
+        e.preventDefault();
+        forceUpdate();
+    });
+    
+    function checkForUpdates() {
+        $checkUpdatesBtn.prop('disabled', true);
+        $updateProgress.show();
+        $updateProgressText.text('Checking for updates...');
+        
+        $.ajax({
+            url: linkBlogSettings.ajaxUrl,
+            type: 'POST',
+            data: {
+                action: 'check_plugin_updates',
+                nonce: linkBlogSettings.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    if (response.data.hasUpdate) {
+                        displayUpdateAvailable(response.data);
+                    } else {
+                        displayUpToDate(response.data);
+                    }
+                } else {
+                    displayUpdateError(response.data.message);
+                }
+            },
+            error: function() {
+                displayUpdateError('Network error occurred while checking for updates.');
+            },
+            complete: function() {
+                $checkUpdatesBtn.prop('disabled', false);
+                $updateProgress.hide();
+            }
+        });
+    }
+    
+    function forceUpdate() {
+        $forceUpdateBtn.prop('disabled', true);
+        $updateProgress.show();
+        $updateProgressText.text('Preparing update...');
+        
+        $.ajax({
+            url: linkBlogSettings.ajaxUrl,
+            type: 'POST',
+            data: {
+                action: 'force_plugin_update',
+                nonce: linkBlogSettings.nonce
+            },
+            success: function(response) {
+                if (response.success && response.data.redirectUrl) {
+                    $updateProgressText.text('Redirecting to WordPress update page...');
+                    window.location.href = response.data.redirectUrl;
+                } else {
+                    displayUpdateError(response.data.message || 'Update failed');
+                    $forceUpdateBtn.prop('disabled', false);
+                    $updateProgress.hide();
+                }
+            },
+            error: function() {
+                displayUpdateError('Network error occurred during update.');
+                $forceUpdateBtn.prop('disabled', false);
+                $updateProgress.hide();
+            }
+        });
+    }
+    
+    function displayUpdateAvailable(data) {
+        const updateHtml = `
+            <div class="notice notice-warning inline">
+                <p><strong>Update Available!</strong></p>
+                <p>
+                    <strong>Latest Version:</strong> v${data.latestVersion} 
+                    <span style="color: #666;">(Released: ${data.releaseDate})</span>
+                </p>
+                <p><strong>Release Notes:</strong> ${data.releaseNotes}</p>
+                <p>
+                    <a href="${data.releaseUrl}" target="_blank" class="button button-secondary">
+                        View Full Release Notes
+                    </a>
+                </p>
+            </div>
+        `;
+        $updateInfo.html(updateHtml);
+        $forceUpdateBtn.show();
+    }
+    
+    function displayUpToDate(data) {
+        const upToDateHtml = `
+            <div class="notice notice-success inline">
+                <p><strong>✅ ${data.message}</strong></p>
+            </div>
+        `;
+        $updateInfo.html(upToDateHtml);
+        $forceUpdateBtn.hide();
+    }
+    
+    function displayUpdateError(message) {
+        const errorHtml = `
+            <div class="notice notice-error inline">
+                <p><strong>Error:</strong> ${message}</p>
+            </div>
+        `;
+        $updateInfo.html(errorHtml);
+        $forceUpdateBtn.hide();
+    }
 
     function updatePreviews() {
         updatePostPreview();

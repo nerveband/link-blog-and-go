@@ -5,6 +5,25 @@ All notable changes to Link Blog and Go will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.4] - 2025-01-17
+
+### Added
+- **Manual Update System**: Added manual update check and trigger in settings page
+- "Check for Updates" button to manually check for new versions
+- "Update Now" button to trigger immediate updates
+- Real-time update status display with version information
+- Release notes preview in update notifications
+- Visual progress indicators during update process
+
+### Changed
+- Enhanced admin interface with dedicated Plugin Updates section
+- Improved update user experience with clear status messages
+- Added AJAX handlers for seamless update checking
+
+### Fixed
+- Update checker now properly clears cache for manual checks
+- Better error handling and user feedback during update process
+
 ## [1.2.3] - 2025-01-17
 
 ### Added

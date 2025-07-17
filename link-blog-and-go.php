@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Link Blog and Go
  * Description: Transform your WordPress blog into a link blog - easily share and comment on interesting links you find across the web. <a href="https://github.com/nerveband/link-blog-and-go">GitHub Repository</a>
- * Version: 1.2.3
+ * Version: 1.2.4
  * Author: Ashraf Ali
  * Author URI: https://ashrafali.net
  * License: MIT
@@ -205,7 +205,7 @@ class Provider_Link_Blog {
 
 class LinkBlogSetup {
     private $options;
-    private $version = '1.2.3';
+    private $version = '1.2.4';
 
     public function __construct() {
         // Initialize options
@@ -229,6 +229,8 @@ class LinkBlogSetup {
         add_action('init', array($this, 'create_link_category'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
         add_action('wp_ajax_create_links_category', array($this, 'ajax_create_links_category'));
+        add_action('wp_ajax_check_plugin_updates', array($this, 'ajax_check_plugin_updates'));
+        add_action('wp_ajax_force_plugin_update', array($this, 'ajax_force_plugin_update'));
         add_filter('the_content', array($this, 'style_link_posts'));
         add_action('wp_head', array($this, 'add_link_styles'));
         add_action('admin_notices', array($this, 'check_links_category'));
@@ -559,7 +561,9 @@ class LinkBlogSetup {
         wp_enqueue_script('link-blog-admin', plugins_url('js/admin.js', __FILE__), array('jquery'), $this->version, true);
         
         wp_localize_script('link-blog-admin', 'linkBlogSettings', array(
-            'nonce' => wp_create_nonce('link_blog_nonce')
+            'nonce' => wp_create_nonce('link_blog_nonce'),
+            'ajaxUrl' => admin_url('admin-ajax.php'),
+            'currentVersion' => $this->version
         ));
     }
 
@@ -860,6 +864,27 @@ Optional: Use shortcodes for custom placement:
                             <pre id="rss-preview"></pre>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Plugin Updates</h3>
+                <div id="update-status" class="update-status">
+                    <p><strong>Current Version:</strong> v<?php echo esc_html($this->version); ?></p>
+                    <div id="update-info"></div>
+                </div>
+                <p>
+                    <button type="button" id="check-updates-btn" class="button button-secondary">
+                        <span class="dashicons dashicons-update" style="margin-top: 3px;"></span>
+                        Check for Updates
+                    </button>
+                    <button type="button" id="force-update-btn" class="button button-primary" style="display: none; margin-left: 10px;">
+                        <span class="dashicons dashicons-download" style="margin-top: 3px;"></span>
+                        Update Now
+                    </button>
+                </p>
+                <div id="update-progress" style="display: none;">
+                    <p><span class="spinner is-active" style="float: none;"></span> <span id="update-progress-text">Checking for updates...</span></p>
                 </div>
             </div>
 
@@ -1367,6 +1392,129 @@ Optional: Use shortcodes for custom placement:
         } else {
             wp_send_json_success(array('message' => 'Category created successfully'));
         }
+    }
+
+    /**
+     * Check for plugin updates manually via AJAX
+     */
+    public function ajax_check_plugin_updates() {
+        check_ajax_referer('link_blog_nonce', 'nonce');
+        
+        if (!current_user_can('update_plugins')) {
+            wp_send_json_error(array('message' => 'Permission denied'));
+        }
+
+        // Clear transient to force fresh check
+        $cache_key = 'link_blog_github_update_' . md5('https://api.github.com/repos/nerveband/link-blog-and-go/releases/latest');
+        delete_transient($cache_key);
+        
+        // Initialize update checker if not already done
+        if (!class_exists('LinkBlogUpdateChecker')) {
+            require_once plugin_dir_path(__FILE__) . 'includes/class-update-checker.php';
+        }
+        
+        $update_checker = new LinkBlogUpdateChecker(__FILE__);
+        $github_data = $this->get_github_release_data();
+        
+        if (!$github_data) {
+            wp_send_json_error(array(
+                'message' => 'Unable to check for updates. Please check your internet connection and try again.'
+            ));
+        }
+        
+        $latest_version = ltrim($github_data['tag_name'], 'v');
+        $current_version = $this->version;
+        
+        if (version_compare($current_version, $latest_version, '<')) {
+            wp_send_json_success(array(
+                'hasUpdate' => true,
+                'currentVersion' => $current_version,
+                'latestVersion' => $latest_version,
+                'releaseDate' => date('F j, Y', strtotime($github_data['published_at'])),
+                'releaseNotes' => wp_trim_words(strip_tags($github_data['body']), 50),
+                'downloadUrl' => $this->get_release_download_url($github_data),
+                'releaseUrl' => $github_data['html_url']
+            ));
+        } else {
+            wp_send_json_success(array(
+                'hasUpdate' => false,
+                'currentVersion' => $current_version,
+                'message' => 'You are running the latest version of Link Blog and Go.'
+            ));
+        }
+    }
+    
+    /**
+     * Force plugin update via AJAX
+     */
+    public function ajax_force_plugin_update() {
+        check_ajax_referer('link_blog_nonce', 'nonce');
+        
+        if (!current_user_can('update_plugins')) {
+            wp_send_json_error(array('message' => 'Permission denied'));
+        }
+        
+        // Get latest release info
+        $github_data = $this->get_github_release_data();
+        if (!$github_data) {
+            wp_send_json_error(array('message' => 'Unable to fetch update information'));
+        }
+        
+        $download_url = $this->get_release_download_url($github_data);
+        if (!$download_url) {
+            wp_send_json_error(array('message' => 'Download URL not found'));
+        }
+        
+        // Trigger WordPress update
+        include_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+        include_once ABSPATH . 'wp-admin/includes/plugin.php';
+        
+        $plugin_slug = plugin_basename(__FILE__);
+        $upgrade_url = wp_nonce_url(
+            self_admin_url('update.php?action=upgrade-plugin&plugin=' . urlencode($plugin_slug)),
+            'upgrade-plugin_' . $plugin_slug
+        );
+        
+        wp_send_json_success(array(
+            'redirectUrl' => $upgrade_url,
+            'message' => 'Redirecting to WordPress update page...'
+        ));
+    }
+    
+    /**
+     * Get GitHub release data
+     */
+    private function get_github_release_data() {
+        $api_url = 'https://api.github.com/repos/nerveband/link-blog-and-go/releases/latest';
+        
+        $response = wp_remote_get($api_url, array(
+            'timeout' => 10,
+            'headers' => array(
+                'Accept' => 'application/vnd.github.v3+json',
+                'User-Agent' => 'WordPress/' . get_bloginfo('version') . '; ' . get_bloginfo('url')
+            )
+        ));
+        
+        if (is_wp_error($response)) {
+            return false;
+        }
+        
+        $data = json_decode(wp_remote_retrieve_body($response), true);
+        return !empty($data['tag_name']) ? $data : false;
+    }
+    
+    /**
+     * Get release download URL
+     */
+    private function get_release_download_url($github_data) {
+        if (!empty($github_data['assets'])) {
+            foreach ($github_data['assets'] as $asset) {
+                if ($asset['name'] === 'link-blog-and-go.zip') {
+                    return $asset['browser_download_url'];
+                }
+            }
+        }
+        return $github_data['zipball_url'] ?? '';
     }
 
     /**
