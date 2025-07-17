@@ -1,16 +1,45 @@
 # Link Blog and Go
 
-> ⚠️ **Beta Status**: This plugin is now in beta, with improved handling of post titles and link formatting.
+> ✅ **Stable Release**: Version 1.3.0 brings major security improvements, modern architecture, and enhanced WordPress integration.
 
 Transform your WordPress blog into a link blog - easily share and comment on interesting links you find across the web, with automatic domain extraction for clean, professional link attribution.
 
-Version: 1.2.0
+Version: 1.3.0
 
 ## What is a Link Blog?
 
 A link blog is a type of blog where posts primarily consist of interesting links you've found on the web, along with your commentary about why they're worth sharing. Think of it as curating the best of the web for your readers.
 
 ![Link Blog and Go WordPress Plugin Interface](link-blog-and-go-screenshot.png)
+
+## 🎉 What's New in Version 1.3.0
+
+This major update brings significant improvements to security, architecture, and maintainability:
+
+### 🔒 Security Enhancements
+- **CSRF Protection**: All admin actions now require valid WordPress nonces
+- **Input Validation**: Comprehensive sanitization and validation of all user inputs
+- **Capability Checks**: Proper permission verification for all administrative functions
+- **URL Security**: Enhanced URL validation with protocol restrictions
+- **Secure Updates**: Improved GitHub auto-updater with SSL verification
+
+### 🏗️ Architecture Improvements
+- **Modern File Structure**: Organized into logical components following WordPress best practices
+- **Autoloading**: PSR-4 style autoloading for better performance
+- **Separation of Concerns**: Clean separation between admin, public, and core functionality
+- **Dependency Injection**: Improved code maintainability and testability
+
+### 🚀 Performance & Compatibility
+- **WordPress 5.0+**: Full compatibility with modern WordPress
+- **PHP 7.4+**: Leverages modern PHP features for better performance
+- **Optimized Loading**: Assets only load where needed
+- **Efficient Database Queries**: Proper use of WordPress APIs
+
+### 🛡️ Developer Features
+- **Comprehensive Documentation**: PHPDoc comments throughout
+- **Error Handling**: Robust error management and logging
+- **Hooks & Filters**: Extensive customization points for developers
+- **Clean Uninstall**: Proper cleanup when removing the plugin
 
 ## Features
 
@@ -23,11 +52,20 @@ A link blog is a type of blog where posts primarily consist of interesting links
 - 🎨 Custom fields for link and via URLs per post
 - 🔄 Shortcodes and variables for theme customization with domain support
 - 🧱 Full Bricks Builder integration with dynamic data and domain tags
+- 🔐 **NEW**: Enhanced security with nonce verification and input sanitization
+- 🏗️ **NEW**: Modern WordPress plugin architecture
+- 🔄 **NEW**: Improved GitHub auto-update system
 - ⚙️ Customizable settings:
   - Custom category name for link posts
   - Customizable permalink symbol and position
   - RSS feed modifications toggle
   - Custom field titles and display options
+
+## System Requirements
+
+- WordPress 5.0 or higher
+- PHP 7.4 or higher
+- MySQL 5.6 or higher
 
 ## Bricks Builder Integration
 
@@ -47,13 +85,13 @@ Link Blog and Go integrates seamlessly with Bricks Builder through both dynamic 
    - With custom title: `{link_blog_via @title:'Source'}`
    - Open in new tab: `{link_blog_via:link:newTab}`
 
-3. `{link_blog_domain}` - The domain from main link (new!)
+3. `{link_blog_domain}` - The domain from main link
    - Basic usage: `{link_blog_domain}` (shows domain as text)
    - As link: `{link_blog_domain:link}` (links to full URL)
    - Custom link text: `{link_blog_domain @linkText:'Visit Site'}`
    - Open in new tab: `{link_blog_domain:link:newTab}`
 
-4. `{link_blog_via_domain}` - The domain from via link (new!)
+4. `{link_blog_via_domain}` - The domain from via link
    - Basic usage: `{link_blog_via_domain}` (shows domain as text)
    - As link: `{link_blog_via_domain:link}` (links to full URL)
    - Custom link text: `{link_blog_via_domain @linkText:'Source Site'}`
@@ -226,6 +264,7 @@ Access plugin settings under Settings > Link Blog and Go to customize:
 - **RSS Feed Modifications**: Toggle enhanced RSS feed formatting for link posts
 - **Custom Fields**: Enable and customize titles for link and via fields
 - **Per-Post Settings**: Custom URL fields in the post editor
+- **Auto-Link Behavior**: Control automatic domain link appending
 
 ## Theme Customization
 
@@ -237,9 +276,9 @@ You can display link and via information in your theme using either shortcodes o
 [link_blog_link title="Custom Title"]
 [via_link]                    # Shows via URL
 [via_link title="Found Via"]
-[link_blog_domain]            # Shows domain only (new!)
+[link_blog_domain]            # Shows domain only
 [link_blog_domain link="false"]  # Domain as text only
-[via_domain]                  # Shows via domain (new!)
+[via_domain]                  # Shows via domain
 [via_domain target="_self"]  # Opens in same tab
 ```
 
@@ -247,8 +286,8 @@ You can display link and via information in your theme using either shortcodes o
 ```
 {link_blog_link}              # Full URL link
 {via_link}                    # Full via URL link
-{link_blog_domain}            # Domain only link (new!)
-{via_domain}                  # Via domain only link (new!)
+{link_blog_domain}            # Domain only link
+{via_domain}                  # Via domain only link
 ```
 
 ## Key Features
@@ -268,25 +307,46 @@ You can display link and via information in your theme using either shortcodes o
 - Set custom via links independently of content
 - Flexible theme integration options
 
+### Security First
+- All user inputs are sanitized and validated
+- CSRF protection on all admin actions
+- Secure URL handling with protocol validation
+- Regular security updates
+
 ## Development Status
 
-This plugin is now in **beta** status with improved stability and handling of post formatting. Recent updates include:
-- ✅ Non-destructive title handling
-- ✅ Improved category-specific processing  
-- ✅ Enhanced customization options
-- ✅ Custom fields for link and via URLs
-- ✅ Theme integration via shortcodes and variables
-- ✅ **NEW**: Domain extraction and display (shows "defector.com" instead of full URLs)
-- ✅ **NEW**: Domain-specific Bricks Builder tags and shortcodes
-- ✅ **NEW**: Cleaner source attribution with arrow symbol
+This plugin is now **stable** with enterprise-grade security and architecture. Version 1.3.0 represents a major milestone:
+
+- ✅ Complete security overhaul
+- ✅ Modern WordPress plugin architecture
+- ✅ Enhanced error handling and logging
+- ✅ Improved GitHub auto-update system
+- ✅ Comprehensive input validation
+- ✅ Full backward compatibility maintained
 
 ## Contributing
 
-This is a personal project in active development. Feel free to:
+This is an open-source project and contributions are welcome! To contribute:
 
 1. Fork the repo
-2. Create a feature branch
-3. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Development Guidelines
+
+- Follow WordPress coding standards
+- Include proper security measures (nonces, sanitization, validation)
+- Add comprehensive PHPDoc comments
+- Test with multiple WordPress versions
+- Ensure backward compatibility
+
+## Support
+
+- **Issues**: Report bugs or request features on [GitHub Issues](https://github.com/nerveband/link-blog-and-go/issues)
+- **Documentation**: Check the [wiki](https://github.com/nerveband/link-blog-and-go/wiki) for detailed documentation
+- **Updates**: Follow the [releases page](https://github.com/nerveband/link-blog-and-go/releases) for updates
 
 ## License
 
@@ -302,4 +362,4 @@ Created by [Ashraf Ali](https://ashrafali.net)
 
 > Sharing interesting links with commentary is a low effort, high value way to contribute to internet life at large.
 > 
-> — Simon Willison 
+> — Simon Willison

@@ -5,6 +5,69 @@ All notable changes to Link Blog and Go will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2025-01-17
+
+### 🔒 Security Enhancements
+- **CSRF Protection**: All admin actions now require valid WordPress nonces
+- **Input Validation**: Comprehensive sanitization and validation of all user inputs
+- **Capability Checks**: Proper permission verification for all administrative functions
+- **URL Security**: Enhanced URL validation with protocol restrictions (http/https only)
+- **Secure Updates**: Improved GitHub auto-updater with SSL verification and response validation
+
+### 🏗️ Architecture Improvements
+- **Complete Refactor**: Entire plugin rewritten following WordPress best practices
+- **Modern File Structure**: Organized into logical components (admin, public, core, updater)
+- **Class Autoloading**: PSR-4 style autoloading for better performance
+- **Separation of Concerns**: Clean separation between admin, public, and core functionality
+- **Dependency Injection**: Improved code maintainability and testability
+- **Singleton Pattern**: Proper plugin initialization with single instance management
+
+### ✨ New Features
+- **Options Manager**: Centralized options handling with validation
+- **URL Extractor**: Dedicated class for secure URL extraction and validation
+- **Error Handling**: Comprehensive error management and logging
+- **Uninstall Script**: Proper cleanup when removing the plugin
+- **Requirements Check**: WordPress and PHP version validation on activation
+
+### 🚀 Performance Improvements
+- **Optimized Loading**: Assets only load where needed (admin pages only)
+- **Efficient Database Queries**: Proper use of WordPress APIs
+- **Transient Caching**: Improved caching for GitHub update checks
+- **Conditional Asset Loading**: CSS/JS only loaded on plugin settings page
+
+### 🛡️ Developer Features
+- **Comprehensive Documentation**: PHPDoc comments throughout all classes and methods
+- **Hooks & Filters**: Extensive customization points for developers
+- **Clean Code**: Following WordPress coding standards and best practices
+- **Backward Compatibility**: All existing features maintained with improved implementation
+
+### 📁 File Structure Changes
+- Created `includes/core/` for core functionality
+- Created `includes/admin/` for admin-specific code
+- Created `includes/public/` for public-facing code
+- Created `includes/updater/` for update system
+- Created `templates/admin/` for admin templates
+- Moved assets to `assets/css/` and `assets/js/`
+
+### 🔧 Technical Details
+- Minimum PHP version: 7.4
+- Minimum WordPress version: 5.0
+- Added text domain support for full internationalization
+- Proper use of WordPress constants and functions
+- Secure file includes with ABSPATH checks
+
+### 🐛 Fixes
+- Fixed potential XSS vulnerabilities in admin interface
+- Fixed CSRF vulnerabilities in AJAX handlers
+- Fixed improper input handling in meta boxes
+- Fixed insecure URL validation
+- Fixed missing permission checks
+
+### 📝 Notes
+- Backup created as `link-blog-and-go-original-backup.php`
+- Legacy update checker maintained for backward compatibility
+- All user data and settings preserved during upgrade
+
 ## [1.2.5] - 2025-01-17
 
 ### Added
