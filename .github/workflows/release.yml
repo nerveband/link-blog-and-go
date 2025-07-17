@@ -3,24 +3,100 @@ name: Create Release
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*.*.*'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Create plugin zip
-        run: |
-          zip -r link-blog-and-go.zip . -x "*.git*" -x "*.github*" -x "*.specstory*"
-
-      - name: Create Release
-        id: create_release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: link-blog-and-go.zip
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Get version from tag
+      id: tag_version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+    
+    - name: Update version in plugin file
+      run: |
+        sed -i "s/Version: .*/Version: ${{ steps.tag_version.outputs.VERSION }}/" link-blog-and-go.php
+    
+    - name: Create plugin directory
+      run: mkdir -p link-blog-and-go
+    
+    - name: Copy plugin files
+      run: |
+        # Copy all files except git-related and development files
+        rsync -av --exclude='.git*' \
+                  --exclude='.github' \
+                  --exclude='*.md' \
+                  --exclude='LICENSE' \
+                  --exclude='.DS_Store' \
+                  --exclude='link-blog-and-go/' \
+                  --exclude='*.zip' \
+                  ./ ./link-blog-and-go/
+    
+    - name: Create zip file
+      run: zip -r link-blog-and-go.zip link-blog-and-go/
+    
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Link Blog and Go v${{ steps.tag_version.outputs.VERSION }}
+        body: |
+          ## Link Blog and Go v${{ steps.tag_version.outputs.VERSION }}
+          
+          ### Installation
+          1. Download `link-blog-and-go.zip` from the assets below
+          2. In WordPress admin, go to Plugins → Add New → Upload Plugin
+          3. Choose the downloaded zip file and click Install Now
+          4. Activate the plugin
+          
+          ### What's New
+          Please see the [changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+          
+          ### Auto-Update Support
+          This plugin includes built-in auto-update functionality. Once installed, it will check for updates directly from GitHub.
+        draft: false
+        prerelease: false
+    
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./link-blog-and-go.zip
+        asset_name: link-blog-and-go.zip
+        asset_content_type: application/zip
+    
+    - name: Generate update info JSON
+      run: |
+        cat > update-info.json << EOF
+        {
+          "version": "${{ steps.tag_version.outputs.VERSION }}",
+          "download_url": "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/link-blog-and-go.zip",
+          "details_url": "https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}",
+          "tested": "6.4",
+          "requires": "5.0",
+          "requires_php": "7.2",
+          "sections": {
+            "description": "Transform your WordPress blog into a link blog with automatic domain extraction.",
+            "changelog": "See the release notes for version ${{ steps.tag_version.outputs.VERSION }}"
+          }
+        }
+        EOF
+    
+    - name: Upload update info
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./update-info.json
+        asset_name: update-info.json
+        asset_content_type: application/json

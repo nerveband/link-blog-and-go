@@ -1,0 +1,57 @@
+# Changelog
+
+All notable changes to Link Blog and Go will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.2.0] - 2024-01-17
+
+### Added
+- **Domain Extraction**: Now displays clean domain names (e.g., "defector.com") instead of full URLs
+- **New Bricks Builder Dynamic Tags**: 
+  - `{link_blog_domain}` - Shows domain from main link
+  - `{link_blog_via_domain}` - Shows domain from via link
+- **New Shortcodes**:
+  - `[link_blog_domain]` - Display main link domain
+  - `[via_domain]` - Display via link domain
+- **New Variables**:
+  - `{link_blog_domain}` - Main domain as link
+  - `{via_domain}` - Via domain as link
+- **Echo Functions for Bricks**:
+  - `link_blog_get_main_domain()` - Returns domain only
+  - `link_blog_get_via_domain()` - Returns via domain only
+  - `link_blog_get_domain_link()` - Returns domain as clickable link
+  - `link_blog_get_via_domain_link()` - Returns via domain as clickable link
+- **Auto-Update System**: Direct GitHub updates without WordPress.org
+- **GitHub Actions**: Automated release creation with zip packages
+
+### Changed
+- Source attribution now shows domain with arrow (→) instead of "Source:"
+- RSS feeds now display domains instead of full URLs
+- Cleaner, more modern link attribution style
+- Updated admin interface to show all new domain features
+
+### Fixed
+- Plugin initialization now works correctly on both admin and frontend
+
+## [1.1.0] - Previous Release
+
+### Added
+- Bricks Builder integration with dynamic data support
+- Custom fields for link and via URLs
+- Shortcodes and variables for theme customization
+- RSS feed enhancements
+
+### Changed
+- Non-destructive title handling
+- Improved category-specific processing
+
+## [1.0.0] - Initial Release
+
+### Added
+- Automatic URL extraction from post content
+- Category-specific formatting for link posts
+- Permalink symbols with customizable position
+- Admin settings page with live preview
+- Basic RSS feed modifications

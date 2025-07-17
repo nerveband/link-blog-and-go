@@ -1,0 +1,24 @@
+{
+  "name": "Link Blog and Go",
+  "slug": "link-blog-and-go",
+  "version": "1.2.0",
+  "download_url": "https://github.com/your-username/link-blog-and-go/releases/latest/download/link-blog-and-go.zip",
+  "homepage": "https://github.com/your-username/link-blog-and-go",
+  "requires": "5.0",
+  "tested": "6.4",
+  "requires_php": "7.2",
+  "last_updated": "2024-01-17 00:00:00",
+  "sections": {
+    "description": "Transform your WordPress blog into a link blog with automatic domain extraction for clean, professional link attribution.",
+    "installation": "Download and install through WordPress admin, or upload the plugin files to your /wp-content/plugins/ directory.",
+    "changelog": "<h4>1.2.0</h4><ul><li>Added domain extraction feature</li><li>New Bricks Builder domain tags</li><li>Auto-update support from GitHub</li><li>Cleaner source attribution</li></ul>"
+  },
+  "banners": {
+    "low": "https://raw.githubusercontent.com/your-username/link-blog-and-go/main/assets/banner-772x250.jpg",
+    "high": "https://raw.githubusercontent.com/your-username/link-blog-and-go/main/assets/banner-1544x500.jpg"
+  },
+  "icons": {
+    "1x": "https://raw.githubusercontent.com/your-username/link-blog-and-go/main/assets/icon-128x128.png",
+    "2x": "https://raw.githubusercontent.com/your-username/link-blog-and-go/main/assets/icon-256x256.png"
+  }
+}

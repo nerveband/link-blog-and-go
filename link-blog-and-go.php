@@ -2,11 +2,14 @@
 /**
  * Plugin Name: Link Blog and Go
  * Description: Transform your WordPress blog into a link blog - easily share and comment on interesting links you find across the web
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: Ashraf Ali
  * Author URI: https://ashrafali.net
  * License: MIT
  * License URI: https://opensource.org/licenses/MIT
+ * Plugin URI: https://github.com/your-username/link-blog-and-go
+ * GitHub Plugin URI: https://github.com/your-username/link-blog-and-go
+ * Update URI: https://github.com/your-username/link-blog-and-go
  */
 
 // Prevent direct access
@@ -14,11 +17,207 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Include the update checker
+require_once plugin_dir_path(__FILE__) . 'includes/class-update-checker.php';
+
+// Initialize update checker
+if (is_admin()) {
+    new LinkBlogUpdateChecker(__FILE__);
+}
+
+// Add activation hook in global namespace
+function activate_link_blog_plugin() {
+    $link_blog_setup = new LinkBlogSetup();
+    $link_blog_setup->create_link_category();
+}
+register_activation_hook(__FILE__, 'activate_link_blog_plugin');
+
+/**
+ * Link Blog Provider for Bricks Builder
+ */
+class Provider_Link_Blog {
+    private $provider_name;
+    private $link_blog_setup;
+    public $tags = [];
+
+    public function __construct($provider) {
+        $this->provider_name = $provider;
+        $this->link_blog_setup = new LinkBlogSetup();
+        $this->register_tags();
+    }
+
+    public static function load_me() {
+        return true; // Always load for now
+    }
+
+    private function register_tags() {
+        $this->tags['link_blog_link'] = [
+            'name'     => 'link_blog_link',
+            'label'    => 'Link Blog Link',
+            'group'    => 'Link Blog',
+            'provider' => $this->provider_name,
+            'args'     => [
+                'title' => [
+                    'label' => 'Link Title',
+                    'type'  => 'text',
+                ],
+                'newTab' => [
+                    'label' => 'Open in New Tab',
+                    'type'  => 'checkbox',
+                ],
+            ],
+        ];
+
+        $this->tags['link_blog_via'] = [
+            'name'     => 'link_blog_via',
+            'label'    => 'Link Blog Via',
+            'group'    => 'Link Blog',
+            'provider' => $this->provider_name,
+            'args'     => [
+                'title' => [
+                    'label' => 'Via Title',
+                    'type'  => 'text',
+                ],
+                'newTab' => [
+                    'label' => 'Open in New Tab',
+                    'type'  => 'checkbox',
+                ],
+            ],
+        ];
+
+        $this->tags['link_blog_domain'] = [
+            'name'     => 'link_blog_domain',
+            'label'    => 'Link Blog Domain',
+            'group'    => 'Link Blog',
+            'provider' => $this->provider_name,
+            'args'     => [
+                'linkText' => [
+                    'label' => 'Link Text (leave empty for domain)',
+                    'type'  => 'text',
+                ],
+                'newTab' => [
+                    'label' => 'Open in New Tab',
+                    'type'  => 'checkbox',
+                ],
+            ],
+        ];
+
+        $this->tags['link_blog_via_domain'] = [
+            'name'     => 'link_blog_via_domain',
+            'label'    => 'Link Blog Via Domain',
+            'group'    => 'Link Blog',
+            'provider' => $this->provider_name,
+            'args'     => [
+                'linkText' => [
+                    'label' => 'Link Text (leave empty for domain)',
+                    'type'  => 'text',
+                ],
+                'newTab' => [
+                    'label' => 'Open in New Tab',
+                    'type'  => 'checkbox',
+                ],
+            ],
+        ];
+    }
+
+    public function get_tags() {
+        return $this->tags;
+    }
+
+    public function get_tag_value($tag, $post, $args = [], $context = 'text') {
+        $options = get_option('link_blog_options', []);
+        
+        switch ($tag) {
+            case 'link_blog_link':
+                $url = $this->link_blog_setup->extract_url_from_content($post->post_content, $post->ID);
+                if (!$url) return '';
+
+                if ($context === 'link' || !empty($args['title'])) {
+                    $title = !empty($args['title']) ? $args['title'] : 
+                            (isset($options['link_blog_title']) ? $options['link_blog_title'] : 'Link Blog Link');
+                    
+                    return sprintf('<a href="%s"%s>%s</a>',
+                        esc_url($url),
+                        !empty($args['newTab']) ? ' target="_blank"' : '',
+                        esc_html($title)
+                    );
+                }
+                
+                return esc_url($url);
+
+            case 'link_blog_via':
+                $url = $this->link_blog_setup->extract_via_url_from_content($post->post_content, $post->ID);
+                if (!$url) return '';
+
+                if ($context === 'link' || !empty($args['title'])) {
+                    $title = !empty($args['title']) ? $args['title'] : 
+                            (isset($options['via_link_title']) ? $options['via_link_title'] : 'Via Link');
+                    
+                    return sprintf('<a href="%s"%s>%s</a>',
+                        esc_url($url),
+                        !empty($args['newTab']) ? ' target="_blank"' : '',
+                        esc_html($title)
+                    );
+                }
+                
+                return esc_url($url);
+
+            case 'link_blog_domain':
+                $url = $this->link_blog_setup->extract_url_from_content($post->post_content, $post->ID);
+                if (!$url) return '';
+                
+                $domain = $this->link_blog_setup->extract_domain_from_url($url);
+                
+                if ($context === 'link' || !empty($args['linkText'])) {
+                    $linkText = !empty($args['linkText']) ? $args['linkText'] : $domain;
+                    
+                    return sprintf('<a href="%s"%s>%s</a>',
+                        esc_url($url),
+                        !empty($args['newTab']) ? ' target="_blank"' : '',
+                        esc_html($linkText)
+                    );
+                }
+                
+                return esc_html($domain);
+
+            case 'link_blog_via_domain':
+                $url = $this->link_blog_setup->extract_via_url_from_content($post->post_content, $post->ID);
+                if (!$url) return '';
+                
+                $domain = $this->link_blog_setup->extract_domain_from_url($url);
+                
+                if ($context === 'link' || !empty($args['linkText'])) {
+                    $linkText = !empty($args['linkText']) ? $args['linkText'] : $domain;
+                    
+                    return sprintf('<a href="%s"%s>%s</a>',
+                        esc_url($url),
+                        !empty($args['newTab']) ? ' target="_blank"' : '',
+                        esc_html($linkText)
+                    );
+                }
+                
+                return esc_html($domain);
+        }
+
+        return '';
+    }
+}
+
 class LinkBlogSetup {
     private $options;
-    private $version = '1.1.0';
+    private $version = '1.2.0';
 
     public function __construct() {
+        // Initialize options
+        $this->options = get_option('link_blog_options');
+        if (false === $this->options) {
+            $this->options = $this->get_default_options();
+            update_option('link_blog_options', $this->options);
+        }
+
+        // Add Bricks echo function filter
+        add_filter('bricks/code/echo_function_names', array($this, 'register_echo_functions'));
+
         add_action('admin_menu', array($this, 'add_plugin_page'));
         add_action('admin_init', array($this, 'page_init'));
         add_action('init', array($this, 'create_link_category'));
@@ -28,12 +227,224 @@ class LinkBlogSetup {
         add_action('wp_head', array($this, 'add_link_styles'));
         add_action('admin_notices', array($this, 'check_links_category'));
 
+        // Register shortcodes
+        add_shortcode('link_blog_link', array($this, 'link_blog_link_shortcode'));
+        add_shortcode('via_link', array($this, 'via_link_shortcode'));
+        add_shortcode('link_blog_domain', array($this, 'link_blog_domain_shortcode'));
+        add_shortcode('via_domain', array($this, 'via_domain_shortcode'));
+        
+        // Add filter for variable replacement
+        add_filter('the_content', array($this, 'replace_link_variables'));
+
+        // Add meta boxes for custom links
+        add_action('add_meta_boxes', array($this, 'add_custom_link_meta_boxes'));
+        add_action('save_post', array($this, 'save_custom_link_meta'));
+
+        // Bricks Builder Integration
+        if (class_exists('\Bricks\Elements')) {
+            add_action('init', [$this, 'init_bricks_integration']);
+        }
+
         // Only add RSS filters if enabled
-        $options = get_option('link_blog_options');
-        if (isset($options['modify_rss']) && $options['modify_rss']) {
+        if (isset($this->options['modify_rss']) && $this->options['modify_rss']) {
             add_filter('the_content_feed', array($this, 'customize_link_feed'));
             add_filter('the_title_rss', array($this, 'customize_feed_title'));
         }
+    }
+
+    public function init_bricks_integration() {
+        add_filter('bricks/dynamic_data/register_providers', function($providers) {
+            $providers[] = 'link-blog';
+            return $providers;
+        });
+
+        add_filter('bricks/dynamic_data/provider_classes', function($classes) {
+            $classes['link-blog'] = 'Provider_Link_Blog';
+            return $classes;
+        });
+    }
+
+    /**
+     * Register functions that can be used with Bricks echo tag
+     */
+    public function register_echo_functions() {
+        return array(
+            'link_blog_get_main_url',
+            'link_blog_get_via_url',
+            'link_blog_get_main_link',
+            'link_blog_get_via_link',
+            'link_blog_get_main_domain',
+            'link_blog_get_via_domain',
+            'link_blog_get_domain_link',
+            'link_blog_get_via_domain_link'
+        );
+    }
+
+    /**
+     * Get the main URL for a post (for Bricks echo tag)
+     */
+    public function link_blog_get_main_url($post_id = null) {
+        if (!$post_id) {
+            global $post;
+            $post_id = $post->ID;
+        }
+
+        // First check for custom field value
+        $custom_link = get_post_meta($post_id, '_link_blog_custom_link', true);
+        if (!empty($custom_link)) {
+            return $custom_link;
+        }
+
+        // If no custom field, get from content
+        $post = get_post($post_id);
+        return $this->extract_url_from_content($post->post_content, $post_id);
+    }
+
+    /**
+     * Extract domain from URL
+     */
+    public function extract_domain_from_url($url) {
+        if (empty($url)) {
+            return '';
+        }
+        
+        $domain = parse_url($url, PHP_URL_HOST);
+        
+        // Remove www. prefix if present
+        if (strpos($domain, 'www.') === 0) {
+            $domain = substr($domain, 4);
+        }
+        
+        return $domain;
+    }
+
+    /**
+     * Get the main domain for a post (for Bricks echo tag)
+     */
+    public function link_blog_get_main_domain($post_id = null) {
+        $url = $this->link_blog_get_main_url($post_id);
+        return $this->extract_domain_from_url($url);
+    }
+
+    /**
+     * Get the via domain for a post (for Bricks echo tag)
+     */
+    public function link_blog_get_via_domain($post_id = null) {
+        $url = $this->link_blog_get_via_url($post_id);
+        return $this->extract_domain_from_url($url);
+    }
+
+    /**
+     * Get the via URL for a post (for Bricks echo tag)
+     */
+    public function link_blog_get_via_url($post_id = null) {
+        if (!$post_id) {
+            global $post;
+            $post_id = $post->ID;
+        }
+
+        // First check for custom field value
+        $custom_via = get_post_meta($post_id, '_link_blog_custom_via', true);
+        if (!empty($custom_via)) {
+            return $custom_via;
+        }
+
+        // If no custom field, get from content
+        $post = get_post($post_id);
+        return $this->extract_via_url_from_content($post->post_content, $post_id);
+    }
+
+    /**
+     * Get formatted main link HTML (for Bricks echo tag)
+     */
+    public function link_blog_get_main_link($post_id = null, $title = '', $use_domain = false) {
+        if (!$post_id) {
+            global $post;
+            $post_id = $post->ID;
+        }
+        $url = $this->extract_url_from_content(get_post($post_id)->post_content, $post_id);
+        if (!$url) return '';
+
+        $options = get_option('link_blog_options', []);
+        $link_title = $title ?: (isset($options['link_blog_title']) ? $options['link_blog_title'] : 'Link Blog Link');
+        $display_text = $use_domain ? $this->extract_domain_from_url($url) : $url;
+        
+        return sprintf('<div class="link-blog-custom-link"><strong>%s:</strong> <a href="%s">%s</a></div>',
+            esc_html($link_title),
+            esc_url($url),
+            esc_html($display_text)
+        );
+    }
+
+    /**
+     * Get formatted via link HTML (for Bricks echo tag)
+     */
+    public function link_blog_get_via_link($post_id = null, $title = '', $use_domain = false) {
+        if (!$post_id) {
+            global $post;
+            $post_id = $post->ID;
+        }
+        $url = $this->extract_via_url_from_content(get_post($post_id)->post_content, $post_id);
+        if (!$url) return '';
+
+        $options = get_option('link_blog_options', []);
+        $via_title = $title ?: (isset($options['via_link_title']) ? $options['via_link_title'] : 'Via Link');
+        $display_text = $use_domain ? $this->extract_domain_from_url($url) : $url;
+        
+        return sprintf('<div class="link-blog-via-link"><strong>%s:</strong> <a href="%s">%s</a></div>',
+            esc_html($via_title),
+            esc_url($url),
+            esc_html($display_text)
+        );
+    }
+
+    /**
+     * Get domain link HTML (for Bricks echo tag)
+     */
+    public function link_blog_get_domain_link($post_id = null, $target = '_blank') {
+        $url = $this->link_blog_get_main_url($post_id);
+        if (!$url) return '';
+        
+        $domain = $this->extract_domain_from_url($url);
+        return sprintf('<a href="%s" target="%s">%s</a>', 
+            esc_url($url), 
+            esc_attr($target), 
+            esc_html($domain)
+        );
+    }
+
+    /**
+     * Get via domain link HTML (for Bricks echo tag)
+     */
+    public function link_blog_get_via_domain_link($post_id = null, $target = '_blank') {
+        $url = $this->link_blog_get_via_url($post_id);
+        if (!$url) return '';
+        
+        $domain = $this->extract_domain_from_url($url);
+        return sprintf('<a href="%s" target="%s">%s</a>', 
+            esc_url($url), 
+            esc_attr($target), 
+            esc_html($domain)
+        );
+    }
+
+    /**
+     * Get default plugin options
+     */
+    private function get_default_options() {
+        return array(
+            'category_name' => 'Links',
+            'permalink_symbol' => '★',
+            'show_permalink' => true,
+            'permalink_position' => 'before',
+            'modify_rss' => false,
+            'rss_show_symbol' => true,
+            'rss_symbol_position' => 'before',
+            'rss_show_source' => true,
+            'enable_custom_fields' => false,
+            'link_blog_title' => 'Link Blog Link',
+            'via_link_title' => 'Via Link'
+        );
     }
 
     public function enqueue_admin_assets($hook) {
@@ -60,7 +471,6 @@ class LinkBlogSetup {
     }
 
     public function create_admin_page() {
-        $this->options = get_option('link_blog_options');
         ?>
         <div class="wrap">
             <h1>Link Blog and Go <span class="version">v<?php echo esc_html($this->version); ?></span></h1>
@@ -193,6 +603,54 @@ Optional: Credit where you found the link with "via"</pre>
                                 </fieldset>
                             </td>
                         </tr>
+                        <tr>
+                            <th scope="row">Custom Link Fields</th>
+                            <td>
+                                <fieldset>
+                                    <label>
+                                        <input type="checkbox" id="enable_custom_fields" name="link_blog_options[enable_custom_fields]" 
+                                            <?php checked(isset($this->options['enable_custom_fields']) ? $this->options['enable_custom_fields'] : false); ?> 
+                                            class="preview-trigger" />
+                                        Enable custom link fields
+                                    </label>
+                                    <br><br>
+                                    <div class="custom-fields-options" style="margin-left: 25px;">
+                                        <label>
+                                            Link Blog Link Title:
+                                            <input type="text" id="link_blog_title" name="link_blog_options[link_blog_title]" 
+                                                value="<?php echo isset($this->options['link_blog_title']) ? esc_attr($this->options['link_blog_title']) : 'Link Blog Link'; ?>" 
+                                                class="regular-text preview-trigger" />
+                                        </label>
+                                        <br><br>
+                                        <label>
+                                            Via Link Title:
+                                            <input type="text" id="via_link_title" name="link_blog_options[via_link_title]" 
+                                                value="<?php echo isset($this->options['via_link_title']) ? esc_attr($this->options['via_link_title']) : 'Via Link'; ?>" 
+                                                class="regular-text preview-trigger" />
+                                        </label>
+                                        <p class="description">
+                                            <strong>Shortcodes:</strong><br>
+                                            • [link_blog_link] - Shows full URL<br>
+                                            • [via_link] - Shows via URL<br>
+                                            • [link_blog_domain] - Shows domain only<br>
+                                            • [via_domain] - Shows via domain only<br>
+                                            <br>
+                                            <strong>Variables:</strong><br>
+                                            • {link_blog_link} - Full URL link<br>
+                                            • {via_link} - Full via URL link<br>
+                                            • {link_blog_domain} - Domain only link<br>
+                                            • {via_domain} - Via domain only link<br>
+                                            <br>
+                                            <strong>Bricks Builder Dynamic Tags:</strong><br>
+                                            • {link_blog_link} - Main URL<br>
+                                            • {link_blog_via} - Via URL<br>
+                                            • {link_blog_domain} - Domain only<br>
+                                            • {link_blog_via_domain} - Via domain only
+                                        </p>
+                                    </div>
+                                </fieldset>
+                            </td>
+                        </tr>
                     </table>
 
                     <?php submit_button(); ?>
@@ -207,7 +665,7 @@ Optional: Credit where you found the link with "via"</pre>
                         <div class="preview-content" id="post-preview">
                             <h2 id="preview-title">Amazing New Technology Revealed</h2>
                             <p>This is fascinating! Company X has developed something incredible. Read more at <a href="https://example.com/tech-news">https://example.com/tech-news</a></p>
-                            <p class="source-link">Source: <a href="https://example.com/tech-news">example.com</a></p>
+                            <p class="source-link">→ <a href="https://example.com/tech-news">example.com</a></p>
                         </div>
                     </div>
                     
@@ -242,6 +700,7 @@ Optional: Credit where you found the link with "via"</pre>
             'link-blog-settings'
         );
 
+        // Category settings
         add_settings_field(
             'category_name',
             'Link Category Name',
@@ -250,6 +709,7 @@ Optional: Credit where you found the link with "via"</pre>
             'link_blog_settings_section'
         );
 
+        // Permalink settings
         add_settings_field(
             'permalink_symbol',
             'Permalink Symbol',
@@ -274,6 +734,7 @@ Optional: Credit where you found the link with "via"</pre>
             'link_blog_settings_section'
         );
 
+        // RSS Feed settings
         add_settings_field(
             'modify_rss',
             'Modify RSS Feed',
@@ -281,25 +742,97 @@ Optional: Credit where you found the link with "via"</pre>
             'link-blog-settings',
             'link_blog_settings_section'
         );
+
+        add_settings_field(
+            'rss_show_symbol',
+            'Show Symbol in RSS',
+            array($this, 'rss_show_symbol_callback'),
+            'link-blog-settings',
+            'link_blog_settings_section'
+        );
+
+        add_settings_field(
+            'rss_symbol_position',
+            'Symbol Position in RSS',
+            array($this, 'rss_symbol_position_callback'),
+            'link-blog-settings',
+            'link_blog_settings_section'
+        );
+
+        add_settings_field(
+            'rss_show_source',
+            'Show Source in RSS',
+            array($this, 'rss_show_source_callback'),
+            'link-blog-settings',
+            'link_blog_settings_section'
+        );
+
+        // Custom fields settings
+        add_settings_field(
+            'enable_custom_fields',
+            'Enable Custom Fields',
+            array($this, 'enable_custom_fields_callback'),
+            'link-blog-settings',
+            'link_blog_settings_section'
+        );
+
+        add_settings_field(
+            'link_blog_title',
+            'Link Blog Title',
+            array($this, 'link_blog_title_callback'),
+            'link-blog-settings',
+            'link_blog_settings_section'
+        );
+
+        add_settings_field(
+            'via_link_title',
+            'Via Link Title',
+            array($this, 'via_link_title_callback'),
+            'link-blog-settings',
+            'link_blog_settings_section'
+        );
     }
 
     public function sanitize($input) {
         $new_input = array();
+        $defaults = $this->get_default_options();
         
-        if(isset($input['category_name']))
-            $new_input['category_name'] = sanitize_text_field($input['category_name']);
+        // Category settings
+        $new_input['category_name'] = !empty($input['category_name']) ? 
+            sanitize_text_field($input['category_name']) : $defaults['category_name'];
         
-        if(isset($input['permalink_symbol']))
-            $new_input['permalink_symbol'] = sanitize_text_field($input['permalink_symbol']);
+        // Permalink settings
+        $new_input['permalink_symbol'] = !empty($input['permalink_symbol']) ? 
+            sanitize_text_field($input['permalink_symbol']) : $defaults['permalink_symbol'];
         
-        if(isset($input['show_permalink']))
-            $new_input['show_permalink'] = (bool)$input['show_permalink'];
+        $new_input['show_permalink'] = isset($input['show_permalink']) ? 
+            (bool)$input['show_permalink'] : $defaults['show_permalink'];
             
-        if(isset($input['permalink_position']))
-            $new_input['permalink_position'] = sanitize_text_field($input['permalink_position']);
+        $new_input['permalink_position'] = isset($input['permalink_position']) ? 
+            sanitize_text_field($input['permalink_position']) : $defaults['permalink_position'];
         
-        if(isset($input['modify_rss']))
-            $new_input['modify_rss'] = (bool)$input['modify_rss'];
+        // RSS Feed settings
+        $new_input['modify_rss'] = isset($input['modify_rss']) ? 
+            (bool)$input['modify_rss'] : $defaults['modify_rss'];
+            
+        $new_input['rss_show_symbol'] = isset($input['rss_show_symbol']) ? 
+            (bool)$input['rss_show_symbol'] : $defaults['rss_show_symbol'];
+            
+        $new_input['rss_symbol_position'] = isset($input['rss_symbol_position']) ? 
+            sanitize_text_field($input['rss_symbol_position']) : $defaults['rss_symbol_position'];
+            
+        $new_input['rss_show_source'] = isset($input['rss_show_source']) ? 
+            (bool)$input['rss_show_source'] : $defaults['rss_show_source'];
+            
+        // Custom fields settings
+        $new_input['enable_custom_fields'] = isset($input['enable_custom_fields']) ? 
+            (bool)$input['enable_custom_fields'] : $defaults['enable_custom_fields'];
+            
+        $new_input['link_blog_title'] = !empty($input['link_blog_title']) ? 
+            sanitize_text_field($input['link_blog_title']) : $defaults['link_blog_title'];
+            
+        $new_input['via_link_title'] = !empty($input['via_link_title']) ? 
+            sanitize_text_field($input['via_link_title']) : $defaults['via_link_title'];
         
         return $new_input;
     }
@@ -349,6 +882,54 @@ Optional: Credit where you found the link with "via"</pre>
         );
     }
 
+    public function rss_show_symbol_callback() {
+        printf(
+            '<input type="checkbox" id="rss_show_symbol" name="link_blog_options[rss_show_symbol]" %s />
+            <label for="rss_show_symbol">Show permalink symbol in RSS titles</label>',
+            isset($this->options['rss_show_symbol']) && $this->options['rss_show_symbol'] ? 'checked' : ''
+        );
+    }
+
+    public function rss_symbol_position_callback() {
+        $position = isset($this->options['rss_symbol_position']) ? $this->options['rss_symbol_position'] : 'before';
+        ?>
+        <select name="link_blog_options[rss_symbol_position]" id="rss_symbol_position">
+            <option value="before" <?php selected($position, 'before'); ?>>Before title</option>
+            <option value="after" <?php selected($position, 'after'); ?>>After title</option>
+        </select>
+        <?php
+    }
+
+    public function rss_show_source_callback() {
+        printf(
+            '<input type="checkbox" id="rss_show_source" name="link_blog_options[rss_show_source]" %s />
+            <label for="rss_show_source">Show source link in RSS description</label>',
+            isset($this->options['rss_show_source']) && $this->options['rss_show_source'] ? 'checked' : ''
+        );
+    }
+
+    public function enable_custom_fields_callback() {
+        printf(
+            '<input type="checkbox" id="enable_custom_fields" name="link_blog_options[enable_custom_fields]" %s />
+            <label for="enable_custom_fields">Enable custom link fields</label>',
+            isset($this->options['enable_custom_fields']) && $this->options['enable_custom_fields'] ? 'checked' : ''
+        );
+    }
+
+    public function link_blog_title_callback() {
+        printf(
+            '<input type="text" id="link_blog_title" name="link_blog_options[link_blog_title]" value="%s" class="regular-text" />',
+            isset($this->options['link_blog_title']) ? esc_attr($this->options['link_blog_title']) : 'Link Blog Link'
+        );
+    }
+
+    public function via_link_title_callback() {
+        printf(
+            '<input type="text" id="via_link_title" name="link_blog_options[via_link_title]" value="%s" class="regular-text" />',
+            isset($this->options['via_link_title']) ? esc_attr($this->options['via_link_title']) : 'Via Link'
+        );
+    }
+
     public function check_links_category() {
         $options = get_option('link_blog_options');
         $category_name = isset($options['category_name']) ? $options['category_name'] : 'Links';
@@ -377,14 +958,13 @@ Optional: Credit where you found the link with "via"</pre>
         // Check if post is in the links category
         if (has_category($category_name, $post)) {
             // Extract first URL from content
-            preg_match('/(https?:\/\/[^\s<>"]+)/i', $content, $matches);
-            if (!empty($matches)) {
-                $url = $matches[1];
-                $domain = parse_url($url, PHP_URL_HOST);
+            $url = $this->extract_url_from_content($content, $post->ID);
+            if ($url) {
+                $domain = $this->extract_domain_from_url($url);
                 
-                // Add source attribution
+                // Add source attribution with domain
                 $content .= sprintf(
-                    '<p class="source-link">Source: <a href="%s">%s</a></p>',
+                    '<p class="source-link">→ <a href="%s">%s</a></p>',
                     esc_url($url),
                     esc_html($domain)
                 );
@@ -433,16 +1013,16 @@ Optional: Credit where you found the link with "via"</pre>
             global $post;
             
             // Get the source URL
-            preg_match('/(https?:\/\/[^\s<>"]+)/i', $post->post_content, $match);
-            $source_url = $match[1] ?? '';
+            $source_url = $this->extract_url_from_content($post->post_content, $post->ID);
             
             // Format the feed content
             $feed_content = '<p>' . get_the_excerpt() . '</p>';
             if ($source_url) {
+                $domain = $this->extract_domain_from_url($source_url);
                 $feed_content .= sprintf(
-                    '<p>Source: <a href="%s">%s</a></p>',
+                    '<p>→ <a href="%s">%s</a></p>',
                     esc_url($source_url),
-                    parse_url($source_url, PHP_URL_HOST)
+                    esc_html($domain)
                 );
             }
             
@@ -463,19 +1043,35 @@ Optional: Credit where you found the link with "via"</pre>
     }
 
     public function add_link_styles() {
+        $options = get_option('link_blog_options');
         ?>
         <style type="text/css">
-            .source-link {
-                margin-top: 2em;
-                font-style: italic;
+            .link-blog-post {
+                margin-bottom: 2em;
             }
-            .permalink {
-                margin-top: 1em;
-                text-align: right;
-            }
-            .permalink a {
-                text-decoration: none;
+            .link-blog-post .source-link {
+                font-size: 0.9em;
                 color: #666;
+                margin-top: 1em;
+            }
+            .link-blog-custom-link,
+            .link-blog-via-link {
+                font-size: 0.9em;
+                color: #666;
+                margin-top: 0.5em;
+            }
+            .link-blog-custom-link strong,
+            .link-blog-via-link strong {
+                color: #333;
+            }
+            .link-blog-custom-link a,
+            .link-blog-via-link a {
+                color: #0073aa;
+                text-decoration: none;
+            }
+            .link-blog-custom-link a:hover,
+            .link-blog-via-link a:hover {
+                text-decoration: underline;
             }
         </style>
         <?php
@@ -510,16 +1106,450 @@ Optional: Credit where you found the link with "via"</pre>
             wp_send_json_success(array('message' => 'Category created successfully'));
         }
     }
+
+    /**
+     * Handle the link_blog_link shortcode
+     */
+    public function link_blog_link_shortcode($atts) {
+        global $post;
+        $options = get_option('link_blog_options');
+        if (!isset($options['enable_custom_fields']) || !$options['enable_custom_fields']) {
+            return '';
+        }
+
+        $atts = shortcode_atts(array(
+            'title' => isset($options['link_blog_title']) ? $options['link_blog_title'] : 'Link Blog Link'
+        ), $atts);
+
+        $url = $this->extract_url_from_content(get_the_content(), $post->ID);
+        if (!$url) {
+            return '';
+        }
+
+        return sprintf('<div class="link-blog-custom-link"><strong>%s:</strong> <a href="%s">%s</a></div>',
+            esc_html($atts['title']),
+            esc_url($url),
+            esc_url($url)
+        );
+    }
+
+    /**
+     * Handle the via_link shortcode
+     */
+    public function via_link_shortcode($atts) {
+        global $post;
+        $options = get_option('link_blog_options');
+        if (!isset($options['enable_custom_fields']) || !$options['enable_custom_fields']) {
+            return '';
+        }
+
+        $atts = shortcode_atts(array(
+            'title' => isset($options['via_link_title']) ? $options['via_link_title'] : 'Via Link'
+        ), $atts);
+
+        $via_url = $this->extract_via_url_from_content(get_the_content(), $post->ID);
+        if (!$via_url) {
+            return '';
+        }
+
+        return sprintf('<div class="link-blog-via-link"><strong>%s:</strong> <a href="%s">%s</a></div>',
+            esc_html($atts['title']),
+            esc_url($via_url),
+            esc_url($via_url)
+        );
+    }
+
+    /**
+     * Handle the link_blog_domain shortcode
+     */
+    public function link_blog_domain_shortcode($atts) {
+        global $post;
+        
+        $atts = shortcode_atts(array(
+            'link' => 'true',
+            'target' => '_blank'
+        ), $atts);
+
+        $url = $this->extract_url_from_content(get_the_content(), $post->ID);
+        if (!$url) {
+            return '';
+        }
+
+        $domain = $this->extract_domain_from_url($url);
+        
+        if ($atts['link'] === 'true') {
+            return sprintf('<a href="%s" target="%s">%s</a>',
+                esc_url($url),
+                esc_attr($atts['target']),
+                esc_html($domain)
+            );
+        }
+        
+        return esc_html($domain);
+    }
+
+    /**
+     * Handle the via_domain shortcode
+     */
+    public function via_domain_shortcode($atts) {
+        global $post;
+        
+        $atts = shortcode_atts(array(
+            'link' => 'true',
+            'target' => '_blank'
+        ), $atts);
+
+        $via_url = $this->extract_via_url_from_content(get_the_content(), $post->ID);
+        if (!$via_url) {
+            return '';
+        }
+
+        $domain = $this->extract_domain_from_url($via_url);
+        
+        if ($atts['link'] === 'true') {
+            return sprintf('<a href="%s" target="%s">%s</a>',
+                esc_url($via_url),
+                esc_attr($atts['target']),
+                esc_html($domain)
+            );
+        }
+        
+        return esc_html($domain);
+    }
+
+    /**
+     * Replace link variables in content
+     */
+    public function replace_link_variables($content) {
+        global $post;
+        $options = get_option('link_blog_options');
+        if (!isset($options['enable_custom_fields']) || !$options['enable_custom_fields']) {
+            return $content;
+        }
+
+        $url = $this->extract_url_from_content($content, $post->ID);
+        $via_url = $this->extract_via_url_from_content($content, $post->ID);
+
+        if ($url) {
+            $link_title = isset($options['link_blog_title']) ? $options['link_blog_title'] : 'Link Blog Link';
+            $link_html = sprintf('<div class="link-blog-custom-link"><strong>%s:</strong> <a href="%s">%s</a></div>',
+                esc_html($link_title),
+                esc_url($url),
+                esc_url($url)
+            );
+            $content = str_replace('{link_blog_link}', $link_html, $content);
+            
+            // Add domain variable support
+            $domain = $this->extract_domain_from_url($url);
+            $domain_html = sprintf('<a href="%s" target="_blank">%s</a>', esc_url($url), esc_html($domain));
+            $content = str_replace('{link_blog_domain}', $domain_html, $content);
+        }
+
+        if ($via_url) {
+            $via_title = isset($options['via_link_title']) ? $options['via_link_title'] : 'Via Link';
+            $via_html = sprintf('<div class="link-blog-via-link"><strong>%s:</strong> <a href="%s">%s</a></div>',
+                esc_html($via_title),
+                esc_url($via_url),
+                esc_url($via_url)
+            );
+            $content = str_replace('{via_link}', $via_html, $content);
+            
+            // Add via domain variable support
+            $via_domain = $this->extract_domain_from_url($via_url);
+            $via_domain_html = sprintf('<a href="%s" target="_blank">%s</a>', esc_url($via_url), esc_html($via_domain));
+            $content = str_replace('{via_domain}', $via_domain_html, $content);
+        }
+
+        return $content;
+    }
+
+    /**
+     * Add meta boxes for custom link fields
+     */
+    public function add_custom_link_meta_boxes() {
+        // Only add meta box if custom fields are enabled
+        if (!isset($this->options['enable_custom_fields']) || !$this->options['enable_custom_fields']) {
+            return;
+        }
+
+        add_meta_box(
+            'link_blog_custom_links',
+            'Custom Link Settings',
+            array($this, 'render_custom_link_meta_box'),
+            'post',
+            'normal',
+            'high'
+        );
+    }
+
+    /**
+     * Save custom link meta data
+     */
+    public function save_custom_link_meta($post_id) {
+        // Check if our nonce is set
+        if (!isset($_POST['link_blog_custom_links_nonce'])) {
+            return;
+        }
+
+        // Verify the nonce
+        if (!wp_verify_nonce($_POST['link_blog_custom_links_nonce'], 'link_blog_custom_links')) {
+            return;
+        }
+
+        // If this is an autosave, don't do anything
+        if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+            return;
+        }
+
+        // Check user permissions
+        if (!current_user_can('edit_post', $post_id)) {
+            return;
+        }
+
+        // Make sure custom fields are enabled
+        if (!isset($this->options['enable_custom_fields']) || !$this->options['enable_custom_fields']) {
+            return;
+        }
+
+        // Save custom link data
+        $custom_link = isset($_POST['link_blog_custom_link']) ? $_POST['link_blog_custom_link'] : '';
+        $custom_via = isset($_POST['link_blog_custom_via']) ? $_POST['link_blog_custom_via'] : '';
+
+        // Only save if URLs are valid
+        if (!empty($custom_link)) {
+            $custom_link = esc_url_raw($custom_link);
+            if ($custom_link) {
+                update_post_meta($post_id, '_link_blog_custom_link', $custom_link);
+            }
+        } else {
+            delete_post_meta($post_id, '_link_blog_custom_link');
+        }
+
+        if (!empty($custom_via)) {
+            $custom_via = esc_url_raw($custom_via);
+            if ($custom_via) {
+                update_post_meta($post_id, '_link_blog_custom_via', $custom_via);
+            }
+        } else {
+            delete_post_meta($post_id, '_link_blog_custom_via');
+        }
+    }
+
+    /**
+     * Render the custom link meta box
+     */
+    public function render_custom_link_meta_box($post) {
+        // Add nonce for security
+        wp_nonce_field('link_blog_custom_links', 'link_blog_custom_links_nonce');
+
+        // Get saved values
+        $custom_link = get_post_meta($post->ID, '_link_blog_custom_link', true);
+        $custom_via = get_post_meta($post->ID, '_link_blog_custom_via', true);
+
+        // Auto-detect URLs if no custom values are set
+        $content = $post->post_content;
+        if (empty($custom_link)) {
+            preg_match('/(https?:\/\/[^\s<>"]+)/i', $content, $matches);
+            $custom_link = isset($matches[1]) ? $matches[1] : '';
+        }
+
+        if (empty($custom_via)) {
+            if (preg_match('/via\s+(https?:\/\/[^\s<>"]+)/i', $content, $matches)) {
+                $custom_via = $matches[1];
+            }
+        }
+
+        // Get field titles from options
+        $link_title = isset($this->options['link_blog_title']) ? $this->options['link_blog_title'] : 'Link Blog Link';
+        $via_title = isset($this->options['via_link_title']) ? $this->options['via_link_title'] : 'Via Link';
+        ?>
+        <div class="link-blog-meta-box">
+            <p>
+                <label for="link_blog_custom_link"><strong><?php echo esc_html($link_title); ?>:</strong></label><br>
+                <input type="url" id="link_blog_custom_link" name="link_blog_custom_link" 
+                    value="<?php echo esc_attr($custom_link); ?>" class="widefat" 
+                    placeholder="Enter URL or leave empty to auto-detect">
+                <span class="description">URL will be auto-detected from content if left empty</span>
+            </p>
+            <p>
+                <label for="link_blog_custom_via"><strong><?php echo esc_html($via_title); ?>:</strong></label><br>
+                <input type="url" id="link_blog_custom_via" name="link_blog_custom_via" 
+                    value="<?php echo esc_attr($custom_via); ?>" class="widefat"
+                    placeholder="Enter URL or leave empty to auto-detect">
+                <span class="description">URL will be auto-detected from content after 'via' if left empty</span>
+            </p>
+            <div class="link-blog-meta-box-actions">
+                <button type="button" class="button" id="link-blog-detect-urls">
+                    Re-detect URLs from Content
+                </button>
+                <button type="button" class="button" id="link-blog-clear-urls">
+                    Clear Custom URLs
+                </button>
+            </div>
+        </div>
+        <script>
+        jQuery(document).ready(function($) {
+            function detectUrls() {
+                var content = '';
+                if (wp.editor && wp.editor.getContent) {
+                    content = wp.editor.getContent('content');
+                } else if (document.getElementById('content')) {
+                    content = document.getElementById('content').value;
+                }
+                
+                if (!content) return;
+
+                // Detect main URL
+                var urlMatch = content.match(/(https?:\/\/[^\s<>"]+)/i);
+                if (urlMatch) {
+                    $('#link_blog_custom_link').val(urlMatch[1]);
+                }
+                
+                // Detect via URL
+                var viaMatch = content.match(/via\s+(https?:\/\/[^\s<>"]+)/i);
+                if (viaMatch) {
+                    $('#link_blog_custom_via').val(viaMatch[1]);
+                }
+            }
+
+            $('#link-blog-detect-urls').click(function(e) {
+                e.preventDefault();
+                detectUrls();
+            });
+
+            $('#link-blog-clear-urls').click(function(e) {
+                e.preventDefault();
+                $('#link_blog_custom_link, #link_blog_custom_via').val('');
+            });
+
+            // Auto-detect URLs when the meta box loads if fields are empty
+            if (!$('#link_blog_custom_link').val() && !$('#link_blog_custom_via').val()) {
+                detectUrls();
+            }
+
+            // Listen for content changes and update URLs if fields are empty
+            var contentUpdateTimer;
+            $(document).on('input change', '#content', function() {
+                clearTimeout(contentUpdateTimer);
+                contentUpdateTimer = setTimeout(function() {
+                    if (!$('#link_blog_custom_link').val() && !$('#link_blog_custom_via').val()) {
+                        detectUrls();
+                    }
+                }, 1000);
+            });
+
+            // Also listen for Gutenberg editor changes
+            if (wp.data && wp.data.subscribe) {
+                wp.data.subscribe(function() {
+                    var content = wp.data.select('core/editor').getEditedPostContent();
+                    if (content && !$('#link_blog_custom_link').val() && !$('#link_blog_custom_via').val()) {
+                        clearTimeout(contentUpdateTimer);
+                        contentUpdateTimer = setTimeout(function() {
+                            detectUrls();
+                        }, 1000);
+                    }
+                });
+            }
+        });
+        </script>
+        <?php
+    }
+
+    /**
+     * Extract the main URL from content
+     */
+    public function extract_url_from_content($content, $post_id = null) {
+        if ($post_id) {
+            // First check for custom field value
+            $custom_link = get_post_meta($post_id, '_link_blog_custom_link', true);
+            if (!empty($custom_link)) {
+                return $custom_link;
+            }
+        }
+        
+        // If no custom field or no post_id, try to find URL in content
+        if (preg_match('/(https?:\/\/[^\s<>"]+)/i', $content, $matches)) {
+            return $matches[1];
+        }
+        return false;
+    }
+
+    /**
+     * Extract the via URL from content
+     */
+    public function extract_via_url_from_content($content, $post_id = null) {
+        if ($post_id) {
+            // First check for custom field value
+            $custom_via = get_post_meta($post_id, '_link_blog_custom_via', true);
+            if (!empty($custom_via)) {
+                return $custom_via;
+            }
+        }
+
+        // If no custom field or no post_id, try to find URL after "via"
+        if (preg_match('/via\s+(https?:\/\/[^\s<>"]+)/i', $content, $matches)) {
+            return $matches[1];
+        }
+        return false;
+    }
+}
+
+// Global echo functions for Bricks Builder
+if (!function_exists('link_blog_get_main_url')) {
+    function link_blog_get_main_url($post_id = null) {
+        $setup = new LinkBlogSetup();
+        return $setup->link_blog_get_main_url($post_id);
+    }
+}
+
+if (!function_exists('link_blog_get_via_url')) {
+    function link_blog_get_via_url($post_id = null) {
+        $setup = new LinkBlogSetup();
+        return $setup->link_blog_get_via_url($post_id);
+    }
+}
+
+if (!function_exists('link_blog_get_main_link')) {
+    function link_blog_get_main_link($post_id = null, $title = '', $use_domain = false) {
+        $setup = new LinkBlogSetup();
+        return $setup->link_blog_get_main_link($post_id, $title, $use_domain);
+    }
+}
+
+if (!function_exists('link_blog_get_via_link')) {
+    function link_blog_get_via_link($post_id = null, $title = '', $use_domain = false) {
+        $setup = new LinkBlogSetup();
+        return $setup->link_blog_get_via_link($post_id, $title, $use_domain);
+    }
+}
+
+if (!function_exists('link_blog_get_main_domain')) {
+    function link_blog_get_main_domain($post_id = null) {
+        $setup = new LinkBlogSetup();
+        return $setup->link_blog_get_main_domain($post_id);
+    }
+}
+
+if (!function_exists('link_blog_get_via_domain')) {
+    function link_blog_get_via_domain($post_id = null) {
+        $setup = new LinkBlogSetup();
+        return $setup->link_blog_get_via_domain($post_id);
+    }
+}
+
+if (!function_exists('link_blog_get_domain_link')) {
+    function link_blog_get_domain_link($post_id = null, $target = '_blank') {
+        $setup = new LinkBlogSetup();
+        return $setup->link_blog_get_domain_link($post_id, $target);
+    }
+}
+
+if (!function_exists('link_blog_get_via_domain_link')) {
+    function link_blog_get_via_domain_link($post_id = null, $target = '_blank') {
+        $setup = new LinkBlogSetup();
+        return $setup->link_blog_get_via_domain_link($post_id, $target);
+    }
 }
 
 // Initialize the plugin
-if (is_admin()) {
-    $link_blog_setup = new LinkBlogSetup();
-}
-
-// Add activation hook
-function activate_link_blog_plugin() {
-    $link_blog_setup = new LinkBlogSetup();
-    $link_blog_setup->create_link_category();
-}
-register_activation_hook(__FILE__, 'activate_link_blog_plugin');
+$link_blog_setup = new LinkBlogSetup();
