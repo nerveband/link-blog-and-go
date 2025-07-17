@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Link Blog and Go
  * Description: Transform your WordPress blog into a link blog - easily share and comment on interesting links you find across the web. <a href="https://github.com/nerveband/link-blog-and-go">GitHub Repository</a>
- * Version: 1.2.1
+ * Version: 1.2.2
  * Author: Ashraf Ali
  * Author URI: https://ashrafali.net
  * License: MIT
@@ -443,7 +443,11 @@ class LinkBlogSetup {
             'rss_show_source' => true,
             'enable_custom_fields' => false,
             'link_blog_title' => 'Link Blog Link',
-            'via_link_title' => 'Via Link'
+            'via_link_title' => 'Via Link',
+            'domain_before_text' => '→ ',
+            'domain_after_text' => '',
+            'via_domain_before_text' => 'via ',
+            'via_domain_after_text' => ''
         );
     }
 
@@ -608,6 +612,51 @@ Optional: Use shortcodes for custom placement:
                             </td>
                         </tr>
                         <tr>
+                            <th scope="row">Domain Text Customization</th>
+                            <td>
+                                <fieldset>
+                                    <legend class="screen-reader-text"><span>Domain Text Options</span></legend>
+                                    <div class="domain-text-options">
+                                        <label>
+                                            Domain Before Text:
+                                            <input type="text" id="domain_before_text" name="link_blog_options[domain_before_text]" 
+                                                value="<?php echo isset($this->options['domain_before_text']) ? esc_attr($this->options['domain_before_text']) : '→ '; ?>" 
+                                                class="regular-text preview-trigger" placeholder="→ " />
+                                        </label>
+                                        <br><br>
+                                        <label>
+                                            Domain After Text:
+                                            <input type="text" id="domain_after_text" name="link_blog_options[domain_after_text]" 
+                                                value="<?php echo isset($this->options['domain_after_text']) ? esc_attr($this->options['domain_after_text']) : ''; ?>" 
+                                                class="regular-text preview-trigger" placeholder="(optional)" />
+                                        </label>
+                                        <br><br>
+                                        <label>
+                                            Via Domain Before Text:
+                                            <input type="text" id="via_domain_before_text" name="link_blog_options[via_domain_before_text]" 
+                                                value="<?php echo isset($this->options['via_domain_before_text']) ? esc_attr($this->options['via_domain_before_text']) : 'via '; ?>" 
+                                                class="regular-text preview-trigger" placeholder="via " />
+                                        </label>
+                                        <br><br>
+                                        <label>
+                                            Via Domain After Text:
+                                            <input type="text" id="via_domain_after_text" name="link_blog_options[via_domain_after_text]" 
+                                                value="<?php echo isset($this->options['via_domain_after_text']) ? esc_attr($this->options['via_domain_after_text']) : ''; ?>" 
+                                                class="regular-text preview-trigger" placeholder="(optional)" />
+                                        </label>
+                                        <p class="description">
+                                            Customize the text that appears before and after domain names in your posts.<br>
+                                            <strong>Examples:</strong><br>
+                                            • "→ example.com" (default main domain format)<br>
+                                            • "via example.com" (default via domain format)<br>
+                                            • "[link_blog_domain before='Source: ' after=' →']"<br>
+                                            • "[via_domain before='(via ' after=')']"<br>
+                                        </p>
+                                    </div>
+                                </fieldset>
+                            </td>
+                        </tr>
+                        <tr>
                             <th scope="row">Custom Link Fields</th>
                             <td>
                                 <fieldset>
@@ -636,8 +685,8 @@ Optional: Use shortcodes for custom placement:
                                             <strong>Shortcodes:</strong><br>
                                             • [link_blog_link] - Shows full URL<br>
                                             • [via_link] - Shows via URL<br>
-                                            • [link_blog_domain] - Shows domain only<br>
-                                            • [via_domain] - Shows via domain only<br>
+                                            • [link_blog_domain] - Shows domain only (supports before/after attributes)<br>
+                                            • [via_domain] - Shows via domain only (supports before/after attributes)<br>
                                             <br>
                                             <strong>Variables:</strong><br>
                                             • {link_blog_link} - Full URL link<br>
@@ -846,6 +895,19 @@ Optional: Use shortcodes for custom placement:
             
         $new_input['via_link_title'] = !empty($input['via_link_title']) ? 
             sanitize_text_field($input['via_link_title']) : $defaults['via_link_title'];
+            
+        // Domain formatting options
+        $new_input['domain_before_text'] = isset($input['domain_before_text']) ? 
+            sanitize_text_field($input['domain_before_text']) : $defaults['domain_before_text'];
+            
+        $new_input['domain_after_text'] = isset($input['domain_after_text']) ? 
+            sanitize_text_field($input['domain_after_text']) : $defaults['domain_after_text'];
+            
+        $new_input['via_domain_before_text'] = isset($input['via_domain_before_text']) ? 
+            sanitize_text_field($input['via_domain_before_text']) : $defaults['via_domain_before_text'];
+            
+        $new_input['via_domain_after_text'] = isset($input['via_domain_after_text']) ? 
+            sanitize_text_field($input['via_domain_after_text']) : $defaults['via_domain_after_text'];
         
         return $new_input;
     }
@@ -980,10 +1042,15 @@ Optional: Use shortcodes for custom placement:
                 
                 // Only add automatic source attribution if no manual placement exists
                 if (!$has_manual_placement) {
+                    $before_text = isset($options['domain_before_text']) ? $options['domain_before_text'] : '→ ';
+                    $after_text = isset($options['domain_after_text']) ? $options['domain_after_text'] : '';
+                    
                     $content .= sprintf(
-                        '<p class="source-link">→ <a href="%s">%s</a></p>',
+                        '<p class="source-link">%s<a href="%s">%s</a>%s</p>',
+                        esc_html($before_text),
                         esc_url($url),
-                        esc_html($domain)
+                        esc_html($domain),
+                        esc_html($after_text)
                     );
                 }
                 
@@ -1217,10 +1284,13 @@ Optional: Use shortcodes for custom placement:
      */
     public function link_blog_domain_shortcode($atts) {
         global $post;
+        $options = get_option('link_blog_options');
         
         $atts = shortcode_atts(array(
             'link' => 'true',
-            'target' => '_blank'
+            'target' => '_blank',
+            'before' => isset($options['domain_before_text']) ? $options['domain_before_text'] : '→ ',
+            'after' => isset($options['domain_after_text']) ? $options['domain_after_text'] : ''
         ), $atts);
 
         $url = $this->extract_url_from_content(get_the_content(), $post->ID);
@@ -1231,14 +1301,16 @@ Optional: Use shortcodes for custom placement:
         $domain = $this->extract_domain_from_url($url);
         
         if ($atts['link'] === 'true') {
-            return sprintf('<a href="%s" target="%s">%s</a>',
+            return sprintf('%s<a href="%s" target="%s">%s</a>%s',
+                esc_html($atts['before']),
                 esc_url($url),
                 esc_attr($atts['target']),
-                esc_html($domain)
+                esc_html($domain),
+                esc_html($atts['after'])
             );
         }
         
-        return esc_html($domain);
+        return esc_html($atts['before'] . $domain . $atts['after']);
     }
 
     /**
@@ -1246,10 +1318,13 @@ Optional: Use shortcodes for custom placement:
      */
     public function via_domain_shortcode($atts) {
         global $post;
+        $options = get_option('link_blog_options');
         
         $atts = shortcode_atts(array(
             'link' => 'true',
-            'target' => '_blank'
+            'target' => '_blank',
+            'before' => isset($options['via_domain_before_text']) ? $options['via_domain_before_text'] : 'via ',
+            'after' => isset($options['via_domain_after_text']) ? $options['via_domain_after_text'] : ''
         ), $atts);
 
         $via_url = $this->extract_via_url_from_content(get_the_content(), $post->ID);
@@ -1260,14 +1335,16 @@ Optional: Use shortcodes for custom placement:
         $domain = $this->extract_domain_from_url($via_url);
         
         if ($atts['link'] === 'true') {
-            return sprintf('<a href="%s" target="%s">%s</a>',
+            return sprintf('%s<a href="%s" target="%s">%s</a>%s',
+                esc_html($atts['before']),
                 esc_url($via_url),
                 esc_attr($atts['target']),
-                esc_html($domain)
+                esc_html($domain),
+                esc_html($atts['after'])
             );
         }
         
-        return esc_html($domain);
+        return esc_html($atts['before'] . $domain . $atts['after']);
     }
 
     /**
@@ -1294,7 +1371,14 @@ Optional: Use shortcodes for custom placement:
             
             // Add domain variable support
             $domain = $this->extract_domain_from_url($url);
-            $domain_html = sprintf('<a href="%s" target="_blank">%s</a>', esc_url($url), esc_html($domain));
+            $before_text = isset($options['domain_before_text']) ? $options['domain_before_text'] : '→ ';
+            $after_text = isset($options['domain_after_text']) ? $options['domain_after_text'] : '';
+            $domain_html = sprintf('%s<a href="%s" target="_blank">%s</a>%s', 
+                esc_html($before_text), 
+                esc_url($url), 
+                esc_html($domain),
+                esc_html($after_text)
+            );
             $content = str_replace('{link_blog_domain}', $domain_html, $content);
         }
 
@@ -1309,7 +1393,14 @@ Optional: Use shortcodes for custom placement:
             
             // Add via domain variable support
             $via_domain = $this->extract_domain_from_url($via_url);
-            $via_domain_html = sprintf('<a href="%s" target="_blank">%s</a>', esc_url($via_url), esc_html($via_domain));
+            $via_before_text = isset($options['via_domain_before_text']) ? $options['via_domain_before_text'] : 'via ';
+            $via_after_text = isset($options['via_domain_after_text']) ? $options['via_domain_after_text'] : '';
+            $via_domain_html = sprintf('%s<a href="%s" target="_blank">%s</a>%s', 
+                esc_html($via_before_text), 
+                esc_url($via_url), 
+                esc_html($via_domain),
+                esc_html($via_after_text)
+            );
             $content = str_replace('{via_domain}', $via_domain_html, $content);
         }
 

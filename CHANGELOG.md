@@ -5,6 +5,24 @@ All notable changes to Link Blog and Go will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2025-01-17
+
+### Added
+- **Customizable Domain Text**: Added before/after text options for domain variables and shortcodes
+- New settings for domain text customization in admin interface:
+  - Domain Before Text (default: "→ ")
+  - Domain After Text (default: "")
+  - Via Domain Before Text (default: "via ")
+  - Via Domain After Text (default: "")
+- Enhanced shortcodes with custom text support:
+  - `[link_blog_domain before="Source: " after=" →"]`
+  - `[via_domain before="(via " after=")"]`
+
+### Changed
+- Domain variables now use customizable text from settings
+- Updated admin interface with new Domain Text Customization section
+- Enhanced shortcode documentation with before/after attributes examples
+
 ## [1.2.1] - 2025-01-17
 
 ### Fixed
