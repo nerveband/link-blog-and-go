@@ -2,8 +2,8 @@
   "name": "Link Blog and Go",
   "slug": "link-blog-and-go",
   "version": "1.2.0",
-  "download_url": "https://github.com/your-username/link-blog-and-go/releases/latest/download/link-blog-and-go.zip",
-  "homepage": "https://github.com/your-username/link-blog-and-go",
+  "download_url": "https://github.com/nerveband/link-blog-and-go/releases/latest/download/link-blog-and-go.zip",
+  "homepage": "https://github.com/nerveband/link-blog-and-go",
   "requires": "5.0",
   "tested": "6.4",
   "requires_php": "7.2",
@@ -14,11 +14,11 @@
     "changelog": "<h4>1.2.0</h4><ul><li>Added domain extraction feature</li><li>New Bricks Builder domain tags</li><li>Auto-update support from GitHub</li><li>Cleaner source attribution</li></ul>"
   },
   "banners": {
-    "low": "https://raw.githubusercontent.com/your-username/link-blog-and-go/main/assets/banner-772x250.jpg",
-    "high": "https://raw.githubusercontent.com/your-username/link-blog-and-go/main/assets/banner-1544x500.jpg"
+    "low": "https://raw.githubusercontent.com/nerveband/link-blog-and-go/main/assets/banner-772x250.jpg",
+    "high": "https://raw.githubusercontent.com/nerveband/link-blog-and-go/main/assets/banner-1544x500.jpg"
   },
   "icons": {
-    "1x": "https://raw.githubusercontent.com/your-username/link-blog-and-go/main/assets/icon-128x128.png",
-    "2x": "https://raw.githubusercontent.com/your-username/link-blog-and-go/main/assets/icon-256x256.png"
+    "1x": "https://raw.githubusercontent.com/nerveband/link-blog-and-go/main/assets/icon-128x128.png",
+    "2x": "https://raw.githubusercontent.com/nerveband/link-blog-and-go/main/assets/icon-256x256.png"
   }
 }

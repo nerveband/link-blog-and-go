@@ -23,7 +23,7 @@ class LinkBlogUpdateChecker {
         $this->plugin_slug = plugin_basename($plugin_file);
         
         // Configure your GitHub repository here
-        $this->github_username = 'your-github-username'; // Update this
+        $this->github_username = 'nerveband';
         $this->github_repo = 'link-blog-and-go';
         $this->github_api_url = "https://api.github.com/repos/{$this->github_username}/{$this->github_repo}/releases/latest";
         

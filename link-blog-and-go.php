@@ -1,15 +1,15 @@
 <?php
 /**
  * Plugin Name: Link Blog and Go
- * Description: Transform your WordPress blog into a link blog - easily share and comment on interesting links you find across the web
+ * Description: Transform your WordPress blog into a link blog - easily share and comment on interesting links you find across the web. <a href="https://github.com/nerveband/link-blog-and-go">GitHub Repository</a>
  * Version: 1.2.0
  * Author: Ashraf Ali
  * Author URI: https://ashrafali.net
  * License: MIT
  * License URI: https://opensource.org/licenses/MIT
- * Plugin URI: https://github.com/your-username/link-blog-and-go
- * GitHub Plugin URI: https://github.com/your-username/link-blog-and-go
- * Update URI: https://github.com/your-username/link-blog-and-go
+ * Plugin URI: https://github.com/nerveband/link-blog-and-go
+ * GitHub Plugin URI: https://github.com/nerveband/link-blog-and-go
+ * Update URI: https://github.com/nerveband/link-blog-and-go
  */
 
 // Prevent direct access
@@ -679,8 +679,16 @@ Optional: Credit where you found the link with "via"</pre>
             </div>
 
             <div class="card">
-                <h3>About the Author</h3>
+                <h3>About the Plugin</h3>
                 <p>Link Blog and Go is developed by <a href="https://ashrafali.net">Ashraf Ali</a>. Feel free to reach out if you need assistance!</p>
+                <p><strong>GitHub Repository:</strong> <a href="https://github.com/nerveband/link-blog-and-go" target="_blank">https://github.com/nerveband/link-blog-and-go</a></p>
+                <p>⭐ Star the repository if you find this plugin useful!</p>
+                <ul>
+                    <li>🐛 <a href="https://github.com/nerveband/link-blog-and-go/issues" target="_blank">Report bugs</a></li>
+                    <li>💡 <a href="https://github.com/nerveband/link-blog-and-go/issues" target="_blank">Request features</a></li>
+                    <li>📖 <a href="https://github.com/nerveband/link-blog-and-go/blob/main/README.md" target="_blank">Read documentation</a></li>
+                    <li>🔄 <a href="https://github.com/nerveband/link-blog-and-go/releases" target="_blank">View releases</a></li>
+                </ul>
             </div>
         </div>
         <?php
