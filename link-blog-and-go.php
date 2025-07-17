@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Link Blog and Go
  * Description: Transform your WordPress blog into a link blog - easily share and comment on interesting links you find across the web. <a href="https://github.com/nerveband/link-blog-and-go">GitHub Repository</a>
- * Version: 1.2.0
+ * Version: 1.2.1
  * Author: Ashraf Ali
  * Author URI: https://ashrafali.net
  * License: MIT

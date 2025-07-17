@@ -5,7 +5,19 @@ All notable changes to Link Blog and Go will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.0] - 2024-01-17
+## [1.2.1] - 2025-01-17
+
+### Fixed
+- **Conditional Domain Links**: Automatic domain links now only appear when no manual shortcodes or variables are used
+- Plugin no longer adds duplicate domain attribution when users manually place `[link_blog_domain]` or `{link_blog_domain}` in content
+- Added detection for all link blog shortcodes and variables to prevent auto-addition conflicts
+
+### Changed
+- Updated admin interface to explain conditional behavior
+- Enhanced live preview to show when auto-addition occurs
+- Improved user documentation with manual placement examples
+
+## [1.2.0] - 2025-01-17
 
 ### Added
 - **Domain Extraction**: Now displays clean domain names (e.g., "defector.com") instead of full URLs
