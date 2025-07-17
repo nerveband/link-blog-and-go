@@ -579,326 +579,473 @@ class LinkBlogSetup {
 
     public function create_admin_page() {
         ?>
-        <div class="wrap">
-            <h1>Link Blog and Go <span class="version">v<?php echo esc_html($this->version); ?></span></h1>
-            
-            <div class="card guide-card">
-                <h2>How to Write a Link Blog Post</h2>
-                <div class="guide-steps">
-                    <div class="guide-step">
-                        <span class="step-number">1</span>
-                        <h3>Create a New Post</h3>
-                        <p>Click "Add New" in the Posts menu and write your post title.</p>
-                    </div>
-                    <div class="guide-step">
-                        <span class="step-number">2</span>
-                        <h3>Add to Links Category</h3>
-                        <p>Select the "Links" category in the sidebar (or your custom category name).</p>
-                    </div>
-                    <div class="guide-step">
-                        <span class="step-number">3</span>
-                        <h3>Write Your Post</h3>
-                        <p>Follow this format:</p>
-                        <pre class="format-example">
-Title: Name of what you're linking to
-
-Your commentary about why this is interesting.
-
-Include the URL you're linking to somewhere in your text:
-https://example.com/article
-
-Optional: Credit where you found the link with "via"
-
-Optional: Use shortcodes for custom placement:
-[link_blog_domain] or {link_blog_domain}</pre>
-                        <p><small><strong>Note:</strong> The plugin automatically adds "→ domain.com" at the end of posts <em>unless</em> you manually place link shortcodes or variables in your content.</small></p>
-                    </div>
-                    <div class="guide-step">
-                        <span class="step-number">4</span>
-                        <h3>Publish</h3>
-                        <p>The plugin will automatically format your post with:</p>
-                        <ul>
-                            <li>Permalink symbol (if enabled)</li>
-                            <li>Source attribution</li>
-                            <li>RSS feed enhancements (if enabled)</li>
-                        </ul>
-                    </div>
-                </div>
+        <div class="wrap link-blog-admin">
+            <div class="admin-header">
+                <h1>🔗 Link Blog and Go <span class="version">v<?php echo esc_html($this->version); ?></span></h1>
+                <p class="subtitle">Transform your WordPress blog into a link blog with automatic domain extraction and beautiful formatting.</p>
             </div>
-
-            <?php
-            // Check if Links category exists
-            $cat = get_category_by_slug('links');
-            if (!$cat) {
-                ?>
-                <div class="notice notice-warning is-dismissible">
-                    <p>
-                        The Links category doesn't exist yet. 
-                        <button type="button" class="button button-secondary" id="create-links-category">Create Links Category</button>
-                    </p>
-                </div>
-                <?php
-            }
-            ?>
-
-            <div class="card settings-card">
-                <form method="post" action="options.php">
-                    <?php settings_fields('link_blog_options_group'); ?>
+            
+            <div class="admin-grid">
+                <!-- Settings Column -->
+                <div class="admin-main">
+                    <?php
+                    // Check if Links category exists
+                    $cat = get_category_by_slug('links');
+                    if (!$cat) {
+                        ?>
+                        <div class="notice notice-warning">
+                            <p>
+                                <strong>Setup Required:</strong> The Links category doesn't exist yet. 
+                                <button type="button" class="button button-secondary" id="create-links-category">Create Links Category</button>
+                            </p>
+                        </div>
+                        <?php
+                    }
+                    ?>
                     
-                    <h2>General Settings</h2>
-                    <table class="form-table">
-                        <tr>
-                            <th scope="row">Link Category Name</th>
-                            <td>
-                                <input type="text" id="category_name" name="link_blog_options[category_name]" 
-                                    value="<?php echo isset($this->options['category_name']) ? esc_attr($this->options['category_name']) : 'Links'; ?>" 
-                                    class="regular-text preview-trigger" />
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Permalink Settings</th>
-                            <td>
-                                <fieldset>
-                                    <label>
-                                        <input type="checkbox" id="show_permalink" name="link_blog_options[show_permalink]" 
-                                            <?php checked(isset($this->options['show_permalink']) ? $this->options['show_permalink'] : true); ?> 
-                                            class="preview-trigger" />
-                                        Show permalink symbol
-                                    </label>
-                                    <br><br>
-                                    <input type="text" id="permalink_symbol" name="link_blog_options[permalink_symbol]" 
-                                        value="<?php echo isset($this->options['permalink_symbol']) ? esc_attr($this->options['permalink_symbol']) : '★'; ?>" 
-                                        class="small-text preview-trigger" />
-                                    <label for="permalink_symbol">Permalink symbol</label>
-                                    <br><br>
-                                    <select name="link_blog_options[permalink_position]" id="permalink_position" class="preview-trigger">
-                                        <option value="before" <?php selected(isset($this->options['permalink_position']) ? $this->options['permalink_position'] : 'before', 'before'); ?>>Before title</option>
-                                        <option value="after" <?php selected(isset($this->options['permalink_position']) ? $this->options['permalink_position'] : 'before', 'after'); ?>>After title</option>
-                                    </select>
-                                    <label for="permalink_position">Symbol position</label>
-                                </fieldset>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row">RSS Feed Settings</th>
-                            <td>
-                                <fieldset>
-                                    <label>
-                                        <input type="checkbox" id="modify_rss" name="link_blog_options[modify_rss]" 
-                                            <?php checked(isset($this->options['modify_rss']) ? $this->options['modify_rss'] : false); ?> 
-                                            class="preview-trigger" />
-                                        Enable RSS feed modifications
-                                    </label>
-                                    <br><br>
-                                    <div class="rss-options" style="margin-left: 25px;">
-                                        <label>
-                                            <input type="checkbox" id="rss_show_symbol" name="link_blog_options[rss_show_symbol]" 
-                                                <?php checked(isset($this->options['rss_show_symbol']) ? $this->options['rss_show_symbol'] : true); ?> 
-                                                class="preview-trigger" />
-                                            Show permalink symbol in RSS titles
+                    <div class="settings-section">
+                        <div class="section-header">
+                            <h2>⚙️ Configuration</h2>
+                            <p>Configure how your link blog works and looks</p>
+                        </div>
+                        
+                        <form method="post" action="options.php" class="link-blog-form">
+                            <?php settings_fields('link_blog_options_group'); ?>
+                            
+                            <!-- Basic Settings -->
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>📁 Basic Settings</h3>
+                                    <p>Essential configuration for your link blog</p>
+                                </div>
+                                <div class="card-content">
+                                    <div class="setting-group">
+                                        <label class="setting-label" for="category_name">
+                                            <strong>Link Category Name</strong>
+                                            <span class="help-text">Posts in this category will be formatted as link posts</span>
                                         </label>
-                                        <br><br>
-                                        <select name="link_blog_options[rss_symbol_position]" id="rss_symbol_position" class="preview-trigger">
-                                            <option value="before" <?php selected(isset($this->options['rss_symbol_position']) ? $this->options['rss_symbol_position'] : 'before', 'before'); ?>>Before title</option>
-                                            <option value="after" <?php selected(isset($this->options['rss_symbol_position']) ? $this->options['rss_symbol_position'] : 'before', 'after'); ?>>After title</option>
-                                        </select>
-                                        <label for="rss_symbol_position">Symbol position in RSS</label>
-                                        <br><br>
-                                        <label>
-                                            <input type="checkbox" id="rss_show_source" name="link_blog_options[rss_show_source]" 
-                                                <?php checked(isset($this->options['rss_show_source']) ? $this->options['rss_show_source'] : true); ?> 
+                                        <input type="text" id="category_name" name="link_blog_options[category_name]" 
+                                            value="<?php echo isset($this->options['category_name']) ? esc_attr($this->options['category_name']) : 'Links'; ?>" 
+                                            class="regular-text preview-trigger" 
+                                            placeholder="Links" />
+                                    </div>
+                                    
+                                    <div class="setting-group">
+                                        <label class="setting-label">
+                                            <strong>Auto-Link Behavior</strong>
+                                            <span class="help-text">Control how domain links are added to your posts</span>
+                                        </label>
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="auto_append_links" name="link_blog_options[auto_append_links]" 
+                                                <?php checked(isset($this->options['auto_append_links']) ? $this->options['auto_append_links'] : true); ?> 
                                                 class="preview-trigger" />
-                                            Show source link in RSS description
+                                            <span class="checkmark"></span>
+                                            Automatically append domain links to posts
+                                        </label>
+                                        <div class="help-details">
+                                            <p><strong>✅ Enabled:</strong> Domain links appear automatically at the end of posts</p>
+                                            <p><strong>❌ Disabled:</strong> You must manually place shortcodes or variables</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Permalink Settings -->
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>🔗 Permalink Settings</h3>
+                                    <p>Customize the permalink symbol display</p>
+                                </div>
+                                <div class="card-content">
+                                    <div class="setting-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="show_permalink" name="link_blog_options[show_permalink]" 
+                                                <?php checked(isset($this->options['show_permalink']) ? $this->options['show_permalink'] : true); ?> 
+                                                class="preview-trigger" />
+                                            <span class="checkmark"></span>
+                                            Show permalink symbol
                                         </label>
                                     </div>
-                                </fieldset>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Domain Text Customization</th>
-                            <td>
-                                <fieldset>
-                                    <legend class="screen-reader-text"><span>Domain Text Options</span></legend>
-                                    <div class="domain-text-options">
-                                        <label>
-                                            Domain Before Text:
+                                    
+                                    <div class="setting-row">
+                                        <div class="setting-group half">
+                                            <label class="setting-label" for="permalink_symbol">
+                                                <strong>Symbol</strong>
+                                            </label>
+                                            <input type="text" id="permalink_symbol" name="link_blog_options[permalink_symbol]" 
+                                                value="<?php echo isset($this->options['permalink_symbol']) ? esc_attr($this->options['permalink_symbol']) : '★'; ?>" 
+                                                class="small-text preview-trigger" 
+                                                placeholder="★" />
+                                        </div>
+                                        
+                                        <div class="setting-group half">
+                                            <label class="setting-label" for="permalink_position">
+                                                <strong>Position</strong>
+                                            </label>
+                                            <select name="link_blog_options[permalink_position]" id="permalink_position" class="preview-trigger">
+                                                <option value="before" <?php selected(isset($this->options['permalink_position']) ? $this->options['permalink_position'] : 'before', 'before'); ?>>Before title</option>
+                                                <option value="after" <?php selected(isset($this->options['permalink_position']) ? $this->options['permalink_position'] : 'before', 'after'); ?>>After title</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Domain Customization -->
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>🎨 Domain Text Customization</h3>
+                                    <p>Customize how domain names appear in your posts</p>
+                                </div>
+                                <div class="card-content">
+                                    <div class="setting-row">
+                                        <div class="setting-group half">
+                                            <label class="setting-label" for="domain_before_text">
+                                                <strong>Main Domain Before Text</strong>
+                                            </label>
                                             <input type="text" id="domain_before_text" name="link_blog_options[domain_before_text]" 
                                                 value="<?php echo isset($this->options['domain_before_text']) ? esc_attr($this->options['domain_before_text']) : '→ '; ?>" 
-                                                class="regular-text preview-trigger" placeholder="→ " />
-                                        </label>
-                                        <br><br>
-                                        <label>
-                                            Domain After Text:
+                                                class="regular-text preview-trigger" 
+                                                placeholder="→ " />
+                                        </div>
+                                        
+                                        <div class="setting-group half">
+                                            <label class="setting-label" for="domain_after_text">
+                                                <strong>Main Domain After Text</strong>
+                                            </label>
                                             <input type="text" id="domain_after_text" name="link_blog_options[domain_after_text]" 
                                                 value="<?php echo isset($this->options['domain_after_text']) ? esc_attr($this->options['domain_after_text']) : ''; ?>" 
-                                                class="regular-text preview-trigger" placeholder="(optional)" />
-                                        </label>
-                                        <br><br>
-                                        <label>
-                                            Via Domain Before Text:
+                                                class="regular-text preview-trigger" 
+                                                placeholder="(optional)" />
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="setting-row">
+                                        <div class="setting-group half">
+                                            <label class="setting-label" for="via_domain_before_text">
+                                                <strong>Via Domain Before Text</strong>
+                                            </label>
                                             <input type="text" id="via_domain_before_text" name="link_blog_options[via_domain_before_text]" 
                                                 value="<?php echo isset($this->options['via_domain_before_text']) ? esc_attr($this->options['via_domain_before_text']) : 'via '; ?>" 
-                                                class="regular-text preview-trigger" placeholder="via " />
-                                        </label>
-                                        <br><br>
-                                        <label>
-                                            Via Domain After Text:
+                                                class="regular-text preview-trigger" 
+                                                placeholder="via " />
+                                        </div>
+                                        
+                                        <div class="setting-group half">
+                                            <label class="setting-label" for="via_domain_after_text">
+                                                <strong>Via Domain After Text</strong>
+                                            </label>
                                             <input type="text" id="via_domain_after_text" name="link_blog_options[via_domain_after_text]" 
                                                 value="<?php echo isset($this->options['via_domain_after_text']) ? esc_attr($this->options['via_domain_after_text']) : ''; ?>" 
-                                                class="regular-text preview-trigger" placeholder="(optional)" />
-                                        </label>
-                                        <p class="description">
-                                            Customize the text that appears before and after domain names in your posts.<br>
-                                            <strong>Examples:</strong><br>
-                                            • "→ example.com" (default main domain format)<br>
-                                            • "via example.com" (default via domain format)<br>
-                                            • "[link_blog_domain before='Source: ' after=' →']"<br>
-                                            • "[via_domain before='(via ' after=')']"<br>
-                                        </p>
+                                                class="regular-text preview-trigger" 
+                                                placeholder="(optional)" />
+                                        </div>
                                     </div>
-                                </fieldset>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Auto-Link Behavior</th>
-                            <td>
-                                <fieldset>
-                                    <legend class="screen-reader-text"><span>Auto-Link Options</span></legend>
-                                    <label>
-                                        <input type="checkbox" id="auto_append_links" name="link_blog_options[auto_append_links]" 
-                                            <?php checked(isset($this->options['auto_append_links']) ? $this->options['auto_append_links'] : true); ?> 
-                                            class="preview-trigger" />
-                                        Automatically append domain links to posts
-                                    </label>
-                                    <p class="description">
-                                        When enabled, domain links are automatically added to the end of posts in the links category.<br>
-                                        When disabled, you must manually place shortcodes or variables where you want them to appear.
-                                    </p>
-                                </fieldset>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Custom Link Fields</th>
-                            <td>
-                                <fieldset>
-                                    <label>
-                                        <input type="checkbox" id="enable_custom_fields" name="link_blog_options[enable_custom_fields]" 
-                                            <?php checked(isset($this->options['enable_custom_fields']) ? $this->options['enable_custom_fields'] : false); ?> 
-                                            class="preview-trigger" />
-                                        Enable custom link fields
-                                    </label>
-                                    <br><br>
-                                    <div class="custom-fields-options" style="margin-left: 25px;">
-                                        <label>
-                                            <input type="checkbox" id="show_link_title" name="link_blog_options[show_link_title]" 
-                                                <?php checked(isset($this->options['show_link_title']) ? $this->options['show_link_title'] : true); ?> 
+                                    
+                                    <div class="examples-box">
+                                        <h4>Examples:</h4>
+                                        <p><code>→ example.com</code> (default main domain format)</p>
+                                        <p><code>via example.com</code> (default via domain format)</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- RSS Feed Settings -->
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>📡 RSS Feed Settings</h3>
+                                    <p>Customize how your link posts appear in RSS feeds</p>
+                                </div>
+                                <div class="card-content">
+                                    <div class="setting-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="modify_rss" name="link_blog_options[modify_rss]" 
+                                                <?php checked(isset($this->options['modify_rss']) ? $this->options['modify_rss'] : false); ?> 
                                                 class="preview-trigger" />
-                                            Show Link Blog Link Title
+                                            <span class="checkmark"></span>
+                                            Modify RSS feed
                                         </label>
-                                        <br><br>
-                                        <label>
-                                            Link Blog Link Title:
+                                    </div>
+                                    
+                                    <div class="rss-options" style="margin-left: 30px; margin-top: 15px;">
+                                        <div class="setting-group">
+                                            <label class="checkbox-label">
+                                                <input type="checkbox" id="rss_show_symbol" name="link_blog_options[rss_show_symbol]" 
+                                                    <?php checked(isset($this->options['rss_show_symbol']) ? $this->options['rss_show_symbol'] : true); ?> 
+                                                    class="preview-trigger" />
+                                                <span class="checkmark"></span>
+                                                Show symbol in RSS titles
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="setting-row">
+                                            <div class="setting-group half">
+                                                <label class="setting-label" for="rss_symbol_position">
+                                                    <strong>Symbol Position</strong>
+                                                </label>
+                                                <select name="link_blog_options[rss_symbol_position]" id="rss_symbol_position" class="preview-trigger">
+                                                    <option value="before" <?php selected(isset($this->options['rss_symbol_position']) ? $this->options['rss_symbol_position'] : 'before', 'before'); ?>>Before title</option>
+                                                    <option value="after" <?php selected(isset($this->options['rss_symbol_position']) ? $this->options['rss_symbol_position'] : 'before', 'after'); ?>>After title</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="setting-group">
+                                            <label class="checkbox-label">
+                                                <input type="checkbox" id="rss_show_source" name="link_blog_options[rss_show_source]" 
+                                                    <?php checked(isset($this->options['rss_show_source']) ? $this->options['rss_show_source'] : true); ?> 
+                                                    class="preview-trigger" />
+                                                <span class="checkmark"></span>
+                                                Show source link in RSS description
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Advanced Settings -->
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>🛠️ Advanced Settings</h3>
+                                    <p>Custom fields and advanced features</p>
+                                </div>
+                                <div class="card-content">
+                                    <div class="setting-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="enable_custom_fields" name="link_blog_options[enable_custom_fields]" 
+                                                <?php checked(isset($this->options['enable_custom_fields']) ? $this->options['enable_custom_fields'] : false); ?> 
+                                                class="preview-trigger" />
+                                            <span class="checkmark"></span>
+                                            Enable custom link fields
+                                        </label>
+                                        <div class="help-details">
+                                            <p>Adds meta boxes to post editor for custom link and via URLs</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="custom-fields-options" style="margin-left: 30px; margin-top: 15px;">
+                                        <div class="setting-group">
+                                            <label class="checkbox-label">
+                                                <input type="checkbox" id="show_link_title" name="link_blog_options[show_link_title]" 
+                                                    <?php checked(isset($this->options['show_link_title']) ? $this->options['show_link_title'] : true); ?> 
+                                                    class="preview-trigger" />
+                                                <span class="checkmark"></span>
+                                                Show "Link Blog Link" title
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="setting-group">
+                                            <label class="setting-label" for="link_blog_title">
+                                                <strong>Link Blog Link Title</strong>
+                                            </label>
                                             <input type="text" id="link_blog_title" name="link_blog_options[link_blog_title]" 
                                                 value="<?php echo isset($this->options['link_blog_title']) ? esc_attr($this->options['link_blog_title']) : 'Link Blog Link'; ?>" 
                                                 class="regular-text preview-trigger" />
-                                        </label>
-                                        <br><br>
-                                        <label>
-                                            <input type="checkbox" id="show_via_title" name="link_blog_options[show_via_title]" 
-                                                <?php checked(isset($this->options['show_via_title']) ? $this->options['show_via_title'] : true); ?> 
-                                                class="preview-trigger" />
-                                            Show Via Link Title
-                                        </label>
-                                        <br><br>
-                                        <label>
-                                            Via Link Title:
+                                        </div>
+                                        
+                                        <div class="setting-group">
+                                            <label class="checkbox-label">
+                                                <input type="checkbox" id="show_via_title" name="link_blog_options[show_via_title]" 
+                                                    <?php checked(isset($this->options['show_via_title']) ? $this->options['show_via_title'] : true); ?> 
+                                                    class="preview-trigger" />
+                                                <span class="checkmark"></span>
+                                                Show "Via Link" title
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="setting-group">
+                                            <label class="setting-label" for="via_link_title">
+                                                <strong>Via Link Title</strong>
+                                            </label>
                                             <input type="text" id="via_link_title" name="link_blog_options[via_link_title]" 
                                                 value="<?php echo isset($this->options['via_link_title']) ? esc_attr($this->options['via_link_title']) : 'Via Link'; ?>" 
                                                 class="regular-text preview-trigger" />
-                                        </label>
-                                        <p class="description">
-                                            <strong>Shortcodes:</strong><br>
-                                            • [link_blog_link] - Shows full URL<br>
-                                            • [via_link] - Shows via URL<br>
-                                            • [link_blog_domain] - Shows domain only (supports before/after attributes)<br>
-                                            • [via_domain] - Shows via domain only (supports before/after attributes)<br>
-                                            <br>
-                                            <strong>Variables:</strong><br>
-                                            • {link_blog_link} - Full URL link<br>
-                                            • {via_link} - Full via URL link<br>
-                                            • {link_blog_domain} - Domain only link<br>
-                                            • {via_domain} - Via domain only link<br>
-                                            <br>
-                                            <strong>Bricks Builder Dynamic Tags:</strong><br>
-                                            • {link_blog_link} - Main URL<br>
-                                            • {link_blog_via} - Via URL<br>
-                                            • {link_blog_domain} - Domain only<br>
-                                            • {link_blog_via_domain} - Via domain only
-                                        </p>
+                                        </div>
+                                        
+                                        <div class="shortcodes-info">
+                                            <h4>Available Shortcodes & Variables:</h4>
+                                            <div class="shortcode-grid">
+                                                <div class="shortcode-item">
+                                                    <strong>Shortcodes:</strong>
+                                                    <code>[link_blog_link]</code>
+                                                    <code>[via_link]</code>
+                                                    <code>[link_blog_domain]</code>
+                                                    <code>[via_domain]</code>
+                                                </div>
+                                                <div class="shortcode-item">
+                                                    <strong>Variables:</strong>
+                                                    <code>{link_blog_link}</code>
+                                                    <code>{via_link}</code>
+                                                    <code>{link_blog_domain}</code>
+                                                    <code>{via_domain}</code>
+                                                </div>
+                                                <div class="shortcode-item">
+                                                    <strong>Bricks Builder Tags:</strong>
+                                                    <code>{link_blog_link}</code>
+                                                    <code>{link_blog_via}</code>
+                                                    <code>{link_blog_domain}</code>
+                                                    <code>{link_blog_via_domain}</code>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                </fieldset>
-                            </td>
-                        </tr>
-                    </table>
-
-                    <?php submit_button(); ?>
-                </form>
-            </div>
-
-            <div class="card preview-card">
-                <h2>Live Preview</h2>
-                <div class="preview-container">
-                    <div class="preview-box">
-                        <h4>Post Preview</h4>
-                        <div class="preview-content" id="post-preview">
-                            <h2 id="preview-title">Amazing New Technology Revealed</h2>
-                            <p>This is fascinating! Company X has developed something incredible. Read more at <a href="https://example.com/tech-news">https://example.com/tech-news</a></p>
-                            <p class="source-link">→ <a href="https://example.com/tech-news">example.com</a></p>
-                            <p><small><em>Auto-added since no manual shortcodes used</em></small></p>
+                                </div>
+                            </div>
+                            
+                            <div class="submit-section">
+                                <?php submit_button('Save Settings', 'primary', 'submit', false, ['class' => 'save-button']); ?>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Live Preview -->
+                    <div class="preview-section">
+                        <div class="section-header">
+                            <h2>👀 Live Preview</h2>
+                            <p>See how your settings will look</p>
+                        </div>
+                        
+                        <div class="preview-container">
+                            <div class="preview-box">
+                                <h4>Post Preview</h4>
+                                <div class="preview-content" id="post-preview">
+                                    <h2 id="preview-title">Amazing New Technology Revealed</h2>
+                                    <p>This is fascinating! Company X has developed something incredible. Read more at <a href="https://example.com/tech-news">https://example.com/tech-news</a></p>
+                                    <p class="source-link">→ <a href="https://example.com/tech-news">example.com</a></p>
+                                    <p><small><em>Auto-added since no manual shortcodes used</em></small></p>
+                                </div>
+                            </div>
+                            
+                            <div class="preview-box" id="rss-preview-container">
+                                <h4>RSS Feed Preview</h4>
+                                <div class="preview-content">
+                                    <pre id="rss-preview"></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sidebar -->
+                <div class="admin-sidebar">
+                    <!-- Quick Guide -->
+                    <div class="sidebar-card">
+                        <h3>📝 Quick Guide</h3>
+                        <div class="guide-steps">
+                            <div class="guide-step">
+                                <span class="step-number">1</span>
+                                <div>
+                                    <strong>Create Post</strong>
+                                    <p>Add a new post and assign it to your Links category</p>
+                                </div>
+                            </div>
+                            <div class="guide-step">
+                                <span class="step-number">2</span>
+                                <div>
+                                    <strong>Add URL</strong>
+                                    <p>Include the URL you want to link to in your post content</p>
+                                </div>
+                            </div>
+                            <div class="guide-step">
+                                <span class="step-number">3</span>
+                                <div>
+                                    <strong>Publish</strong>
+                                    <p>The plugin automatically formats your post with domain links</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="preview-box" id="rss-preview-container">
-                        <h4>RSS Feed Preview</h4>
-                        <div class="preview-content">
-                            <pre id="rss-preview"></pre>
+                    <!-- Plugin Updates -->
+                    <div class="sidebar-card">
+                        <h3>🔄 Plugin Updates</h3>
+                        <div id="update-status" class="update-status">
+                            <p><strong>Current Version:</strong> v<?php echo esc_html($this->version); ?></p>
+                            <div id="update-info"></div>
+                        </div>
+                        <p>
+                            <button type="button" id="check-updates-btn" class="button button-secondary">
+                                <span class="dashicons dashicons-update"></span>
+                                Check for Updates
+                            </button>
+                            <button type="button" id="force-update-btn" class="button button-primary" style="display: none; margin-top: 10px; width: 100%;">
+                                <span class="dashicons dashicons-download"></span>
+                                Update Now
+                            </button>
+                        </p>
+                        <div id="update-progress" style="display: none;">
+                            <p><span class="spinner is-active"></span> <span id="update-progress-text">Checking for updates...</span></p>
+                        </div>
+                    </div>
+                    
+                    <!-- Changelog -->
+                    <div class="sidebar-card">
+                        <h3>📋 Recent Changes</h3>
+                        <div class="changelog">
+                            <div class="changelog-item">
+                                <div class="version-badge">v1.2.4</div>
+                                <div class="changelog-content">
+                                    <strong>Manual Update System</strong>
+                                    <ul>
+                                        <li>Added manual update check button</li>
+                                        <li>Real-time update status display</li>
+                                        <li>Enhanced admin interface</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="changelog-item">
+                                <div class="version-badge">v1.2.3</div>
+                                <div class="changelog-content">
+                                    <strong>Auto-Link Control & Bricks Builder</strong>
+                                    <ul>
+                                        <li>Added auto-link behavior toggle</li>
+                                        <li>Fixed Bricks Builder dynamic tags</li>
+                                        <li>Title display control options</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="changelog-item">
+                                <div class="version-badge">v1.2.2</div>
+                                <div class="changelog-content">
+                                    <strong>Domain Text Customization</strong>
+                                    <ul>
+                                        <li>Customizable before/after text</li>
+                                        <li>Enhanced shortcode attributes</li>
+                                        <li>Better admin interface</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="https://github.com/nerveband/link-blog-and-go/blob/main/CHANGELOG.md" target="_blank" class="view-all-link">View Full Changelog →</a>
+                    </div>
+                    
+                    <!-- Support -->
+                    <div class="sidebar-card">
+                        <h3>💬 Support & Links</h3>
+                        <div class="support-links">
+                            <a href="https://github.com/nerveband/link-blog-and-go" target="_blank" class="support-link">
+                                <span class="dashicons dashicons-github"></span>
+                                GitHub Repository
+                            </a>
+                            <a href="https://github.com/nerveband/link-blog-and-go/issues" target="_blank" class="support-link">
+                                <span class="dashicons dashicons-bug"></span>
+                                Report Bug
+                            </a>
+                            <a href="https://github.com/nerveband/link-blog-and-go/issues" target="_blank" class="support-link">
+                                <span class="dashicons dashicons-lightbulb"></span>
+                                Request Feature
+                            </a>
+                            <a href="https://github.com/nerveband/link-blog-and-go/releases" target="_blank" class="support-link">
+                                <span class="dashicons dashicons-download"></span>
+                                View Releases
+                            </a>
+                        </div>
+                        <div class="author-info">
+                            <p><strong>Developed by:</strong> <a href="https://ashrafali.net" target="_blank">Ashraf Ali</a></p>
+                            <p>⭐ Star the repository if you find this plugin useful!</p>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <div class="card">
-                <h3>Plugin Updates</h3>
-                <div id="update-status" class="update-status">
-                    <p><strong>Current Version:</strong> v<?php echo esc_html($this->version); ?></p>
-                    <div id="update-info"></div>
-                </div>
-                <p>
-                    <button type="button" id="check-updates-btn" class="button button-secondary">
-                        <span class="dashicons dashicons-update" style="margin-top: 3px;"></span>
-                        Check for Updates
-                    </button>
-                    <button type="button" id="force-update-btn" class="button button-primary" style="display: none; margin-left: 10px;">
-                        <span class="dashicons dashicons-download" style="margin-top: 3px;"></span>
-                        Update Now
-                    </button>
-                </p>
-                <div id="update-progress" style="display: none;">
-                    <p><span class="spinner is-active" style="float: none;"></span> <span id="update-progress-text">Checking for updates...</span></p>
-                </div>
-            </div>
-
-            <div class="card">
-                <h3>About the Plugin</h3>
-                <p>Link Blog and Go is developed by <a href="https://ashrafali.net">Ashraf Ali</a>. Feel free to reach out if you need assistance!</p>
-                <p><strong>GitHub Repository:</strong> <a href="https://github.com/nerveband/link-blog-and-go" target="_blank">https://github.com/nerveband/link-blog-and-go</a></p>
-                <p>⭐ Star the repository if you find this plugin useful!</p>
-                <ul>
-                    <li>🐛 <a href="https://github.com/nerveband/link-blog-and-go/issues" target="_blank">Report bugs</a></li>
-                    <li>💡 <a href="https://github.com/nerveband/link-blog-and-go/issues" target="_blank">Request features</a></li>
-                    <li>📖 <a href="https://github.com/nerveband/link-blog-and-go/blob/main/README.md" target="_blank">Read documentation</a></li>
-                    <li>🔄 <a href="https://github.com/nerveband/link-blog-and-go/releases" target="_blank">View releases</a></li>
-                </ul>
             </div>
         </div>
         <?php
@@ -1042,9 +1189,8 @@ Optional: Use shortcodes for custom placement:
         $new_input['rss_show_source'] = isset($input['rss_show_source']) ? 
             (bool)$input['rss_show_source'] : $defaults['rss_show_source'];
             
-        // Auto-append links setting
-        $new_input['auto_append_links'] = isset($input['auto_append_links']) ? 
-            (bool)$input['auto_append_links'] : $defaults['auto_append_links'];
+        // Auto-append links setting (checkbox - false if not set)
+        $new_input['auto_append_links'] = isset($input['auto_append_links']) ? true : false;
             
         // Custom fields settings
         $new_input['enable_custom_fields'] = isset($input['enable_custom_fields']) ? 
