@@ -500,7 +500,11 @@ Your commentary about why this is interesting.
 Include the URL you're linking to somewhere in your text:
 https://example.com/article
 
-Optional: Credit where you found the link with "via"</pre>
+Optional: Credit where you found the link with "via"
+
+Optional: Use shortcodes for custom placement:
+[link_blog_domain] or {link_blog_domain}</pre>
+                        <p><small><strong>Note:</strong> The plugin automatically adds "→ domain.com" at the end of posts <em>unless</em> you manually place link shortcodes or variables in your content.</small></p>
                     </div>
                     <div class="guide-step">
                         <span class="step-number">4</span>
@@ -666,6 +670,7 @@ Optional: Credit where you found the link with "via"</pre>
                             <h2 id="preview-title">Amazing New Technology Revealed</h2>
                             <p>This is fascinating! Company X has developed something incredible. Read more at <a href="https://example.com/tech-news">https://example.com/tech-news</a></p>
                             <p class="source-link">→ <a href="https://example.com/tech-news">example.com</a></p>
+                            <p><small><em>Auto-added since no manual shortcodes used</em></small></p>
                         </div>
                     </div>
                     
@@ -970,12 +975,17 @@ Optional: Credit where you found the link with "via"</pre>
             if ($url) {
                 $domain = $this->extract_domain_from_url($url);
                 
-                // Add source attribution with domain
-                $content .= sprintf(
-                    '<p class="source-link">→ <a href="%s">%s</a></p>',
-                    esc_url($url),
-                    esc_html($domain)
-                );
+                // Check if user has manually placed link blog shortcodes or variables
+                $has_manual_placement = $this->has_manual_link_placement($content);
+                
+                // Only add automatic source attribution if no manual placement exists
+                if (!$has_manual_placement) {
+                    $content .= sprintf(
+                        '<p class="source-link">→ <a href="%s">%s</a></p>',
+                        esc_url($url),
+                        esc_html($domain)
+                    );
+                }
                 
                 // Add permalink if enabled
                 if ($show_permalink) {
@@ -996,6 +1006,41 @@ Optional: Credit where you found the link with "via"</pre>
             }
         }
         return $content;
+    }
+
+    /**
+     * Check if content contains manual link blog placement (shortcodes or variables)
+     */
+    private function has_manual_link_placement($content) {
+        // Check for shortcodes
+        $shortcodes = array(
+            '[link_blog_link',
+            '[link_blog_domain',
+            '[via_link',
+            '[via_domain'
+        );
+        
+        foreach ($shortcodes as $shortcode) {
+            if (strpos($content, $shortcode) !== false) {
+                return true;
+            }
+        }
+        
+        // Check for variables
+        $variables = array(
+            '{link_blog_link}',
+            '{link_blog_domain}',
+            '{via_link}',
+            '{via_domain}'
+        );
+        
+        foreach ($variables as $variable) {
+            if (strpos($content, $variable) !== false) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     public function create_link_category() {
